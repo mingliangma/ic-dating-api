@@ -44,3 +44,7 @@ docker build -t ic .
 ```
 docker run -p 3000:3000 ic
 ```
+
+## AWS EB Deployment
+
+URL: http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create_deploy_nodejs_express.html#create_deploy_nodejs_express_eb_init-rds
