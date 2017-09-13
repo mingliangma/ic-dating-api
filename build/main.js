@@ -219,7 +219,7 @@ class ExpressServer {
   }
 
   listen(port = process.env.PORT) {
-    const welcome = p => () => _logger2.default.info(`up and running in ${"development" || 'development'} @: ${os.hostname()} on port: ${p}}`);
+    const welcome = p => () => _logger2.default.info(`up and running in ${"production" || 'development'} @: ${os.hostname()} on port: ${p}}`);
     http.createServer(app).listen(port, welcome(port));
     return app;
   }
@@ -263,7 +263,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function (app, routes) {
-  (0, _swaggerExpressMiddleware2.default)(path.join(__dirname, 'SwaggerApi.yaml'), app, (err, mw) => {
+  (0, _swaggerExpressMiddleware2.default)(path.join(__dirname, 'Api.yaml'), app, (err, mw) => {
     // Enable Express' case-sensitive and strict options
     // (so "/entities", "/Entities", and "/Entities/" are all different)
     app.enable('case sensitive routing');
