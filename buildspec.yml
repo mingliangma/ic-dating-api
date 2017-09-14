@@ -9,8 +9,8 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Compiling the Node.js code
-      - node build.js
-      - chmod 755 node_modules/backpack-core/bin/*
+      - whoami
+      - chmod 777 node_modules/backpack-core/bin/*
       - ls -l node_modules/backpack-core/bin
       - npm run compile
 artifacts:
