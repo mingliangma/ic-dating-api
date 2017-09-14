@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./build/main",
-    "compile": "node build.js && backpack build",
+    "compile": "backpack build",
     "dev": "node build.js && backpack dev | pino -o 'short'"
   },
   "dependencies": {
