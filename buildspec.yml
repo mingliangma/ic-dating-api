@@ -9,8 +9,9 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Compiling the Node.js code
-      - ls -l
       - node build.js
+      - ls -l node_modules
+      - ls -l node_modules/backpack-core/bin
       - npm run compile
 artifacts:
   files:
