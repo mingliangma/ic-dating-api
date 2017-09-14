@@ -9,7 +9,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Compiling the Node.js code
-      - ls
+      - ls -l
       - npm run compile
 artifacts:
   files:
