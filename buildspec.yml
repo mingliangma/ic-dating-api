@@ -12,4 +12,11 @@ phases:
       - npm run compile
 artifacts:
   files:
-    - '**/*'
+    - .ebextensions/*
+    - build/**/*
+    - index.js
+    - server/**/*
+    - public/**/*
+    - package.json
+    - package-lock.json
+
