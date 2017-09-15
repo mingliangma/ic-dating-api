@@ -5,11 +5,11 @@ info:
   title: IC Dating API
   contact:
     email: charlie@aworkingapp.com
-host: api.icdating.com
+host: localhost:3000
 basePath: /api/v1
 tags:
   - name: account
-    description: Everything about user account
+    description: Everything about account account
 schemes:
   - http
 paths:
@@ -40,7 +40,7 @@ paths:
     post:
       tags:
         - account
-      summary: 'Verify user phone number, sends out verification code if necessary'
+      summary: 'Verify account phone number, sends out verification code if necessary'
       description: ''
       operationId: verifyPhoneNumber
       consumes:
@@ -50,12 +50,12 @@ paths:
       parameters:
         - name: phone
           in: path
-          description: phone number of current user
+          description: phone number of current account
           required: true
           type: string
       responses:
         '200':
-          description: Account already exist and user can use password to login
+          description: Account already exist and account can use password to login
         '201':
           description: >-
             Verification code sent, and record created, regardless whether user
@@ -68,7 +68,7 @@ paths:
     post:
       tags:
         - account
-      summary: 'Verify user phone number, sends out verification code if necessary'
+      summary: 'Verify account phone number, sends out verification code if necessary'
       description: ''
       operationId: verifyVerificationCode
       consumes:
@@ -78,7 +78,7 @@ paths:
       parameters:
         - name: phone
           in: path
-          description: phone number of current user
+          description: phone number of current account
           required: true
           type: string
         - name: code
@@ -101,7 +101,7 @@ paths:
     post:
       tags:
         - account
-      summary: Register a user Account
+      summary: Register a account Account
       operationId: registerAccount
       consumes:
         - application/json
@@ -130,7 +130,7 @@ paths:
     post:
       tags:
         - account
-      summary: Login a user Account
+      summary: Login a account Account
       operationId: loginAccount
       consumes:
         - application/json
@@ -156,7 +156,7 @@ paths:
   #   post:
   #     tags:
   #     - account
-  #     summary: Login a user Account
+  #     summary: Login a account Account
   #     operationId: logoutAccount
   #     consumes:
   #       - application/json
@@ -178,7 +178,7 @@ paths:
     get:
       tags:
       - account
-      summary: Get user info by user ID
+      summary: Get account info by account ID
       operationId: getAccountByUserId
       produces:
         - application/json
@@ -200,8 +200,8 @@ paths:
     put:
       tags:
       - account
-      summary: Updated user account
-      description: This can only be done by the logged in user.
+      summary: Updated account account
+      description: This can only be done by the logged in account.
       operationId: updateAccount
       produces:
       - application/json
@@ -213,7 +213,7 @@ paths:
         type: string
       - in: body
         name: body
-        description: Updated user object
+        description: Updated account object
         required: true
         schema:
           $ref: '#/definitions/AccountWithToken'
@@ -227,7 +227,7 @@ paths:
     get:
       tags:
       - account
-      summary: Get user profile images by user ID
+      summary: Get account profile images by account ID
       operationId: getImagesByUserId
       produces:
         - application/json
@@ -249,7 +249,7 @@ paths:
     post:
       tags:
       - account
-      summary: Upload user profile images by user ID
+      summary: Upload account profile images by account ID
       operationId: saveImageByUserId
       consumes:
          - multipart/form-data
@@ -273,7 +273,7 @@ paths:
     get:
       tags:
       - search
-      summary: Get user info by user ID
+      summary: Get account info by account ID
       operationId: search
       produces:
         - application/json

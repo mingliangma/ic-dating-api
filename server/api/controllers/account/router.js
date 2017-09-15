@@ -3,4 +3,4 @@ import controller from './controller';
 
 export default express
   .Router()
-  .get('/me', controller.all);
+  .get('/me', controller.me);
