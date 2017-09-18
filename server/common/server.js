@@ -16,7 +16,7 @@ export default class ExpressServer {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(cookieParser(process.env.SESSION_SECRET));
-    app.use(Express.static(`${root}/public`));
+    app.use(Express.static(`${root}/build/public`));
   }
 
   router(routes) {
