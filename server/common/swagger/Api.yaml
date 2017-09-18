@@ -5,7 +5,6 @@ info:
   title: IC Dating API
   contact:
     email: charlie@aworkingapp.com
-host: localhost:3000
 basePath: /api/v1
 tags:
   - name: account
