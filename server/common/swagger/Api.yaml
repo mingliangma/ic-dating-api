@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: Api specs for ICDating
-  version: 1.0.0
+  version: 1.0.0-b1
   title: IC Dating API
   contact:
     email: charlie@aworkingapp.com
@@ -35,7 +35,7 @@ paths:
             $ref: '#/definitions/AccountVM'
         '401':
           description: Token is no longer valid
-  '/accnout/verify/phone/{phone}':
+  '/account/verify/phone/{phoneNum}':
     post:
       tags:
         - account
@@ -47,7 +47,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: phone
+        - name: phoneNum
           in: path
           description: phone number of current account
           required: true
@@ -63,7 +63,7 @@ paths:
           description: Invalid Request
         '500':
           description: Server internal error
-  '/account/verify/code/{phone}/{code}':
+  '/account/verify/phone/{phoneNum}/code/{code}':
     post:
       tags:
         - account
@@ -75,7 +75,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: phone
+        - name: phoneNum
           in: path
           description: phone number of current account
           required: true

@@ -8,13 +8,22 @@ import swaggerify from './swagger';
 import l from './logger';
 
 const app = new Express();
+const morgan = require('morgan');
 
 export default class ExpressServer {
   constructor() {
     const root = path.normalize(`${__dirname}/../..`);
     app.set('appPath', `${root}client`);
+
+
+    // use body parser so we can get info from POST and/or URL parameters
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
+
+    // use morgan to log requests to the console
+    app.use(morgan('dev'));
+
+
     app.use(cookieParser(process.env.SESSION_SECRET));
     app.use(Express.static(`${root}/build/public`));
   }

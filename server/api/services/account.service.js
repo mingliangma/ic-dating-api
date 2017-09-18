@@ -2,7 +2,6 @@ import l from '../../common/logger';
 
 class AccountService {
   me() {
-    l.info(`${this.constructor.name}.me()`);
     const result = {
       accountId: '1dfasdf1',
       displayName: 'Ming',
@@ -25,6 +24,25 @@ class AccountService {
       ],
     };
     return result;
+  }
+
+  phoneVerification(phoneNum) {
+    if (phoneNum === '0000000000') {
+      return { isNumExist: true, message: 'Account already exist and account can use password to login' };
+    }
+    return { isNumExist: false, message: 'Verification code sent, and record created, regardless whether user has sent the reuqest before' };
+  }
+
+  codeVerify(phoneNum, code) {
+    return { token: '1asdfasdf2' };
+  }
+
+  createAccount() {
+    return { token: '1asdfasdf2' };
+  }
+
+  login() {
+    return { token: '1asdfasdf2' };
   }
 }
 
