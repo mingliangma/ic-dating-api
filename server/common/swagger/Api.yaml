@@ -49,7 +49,7 @@ paths:
       parameters:
         - name: phoneNum
           in: path
-          description: phone number of current account
+          description: Phone number of current account. The number must be in the E.164 Format. Eg. +14155552671 for Country Code 1, +442071838750 for Country Code 44.
           required: true
           type: string
       responses:

@@ -57,15 +57,15 @@ export class Controller {
     l.info(`IC Code: ${token}`);
 
     // send OTP code to user through SMS
-    // SmsService.sendSms(req.params.phoneNum, `IC Code: ${token}`)
-    //   .then(message => {
-    //     res.status(201);
-    //     res.json({ success: true, message: `Verification code sent, messageId is ${message.sid}` });
-    //   })
-    //   .catch(err => {
-    //     console.log('err: ', err);
-    //     res.boom.badRequest(err);
-    //   });
+    SmsService.sendSms(req.params.phoneNum, `IC Code: ${token}`)
+      .then(message => {
+        res.status(201);
+        res.json({ codeForTesting: token, success: true, message: `Verification code sent, messageId is ${message.sid}` });
+      })
+      .catch(err => {
+        console.log('err: ', err);
+        res.boom.badRequest(err);
+      });
   }
 
   verifyCode(req, res) {
