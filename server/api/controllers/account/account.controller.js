@@ -1,4 +1,4 @@
-/* eslint-disable newline-per-chained-call */
+/* eslint-disable newline-per-chained-call,consistent-return */
 import AccountService from '../../services/account.service';
 import SmsService from '../../services/sms.service';
 import OtpService from '../../services/otp.service';
@@ -30,7 +30,10 @@ export class Controller {
     }
 
     JwtService.verifyToken(req.headers.token)
-      .then(decoded => User.findOne({ phone_num: decoded.phoneNum }))
+      .then(decoded => {
+        l.debug(decoded);
+        return User.findOne({ phone_num: decoded.phoneNum });
+      })
       .then(user => {
         if (!user) {
           throw new Error('JWT validated correctly but the user record is not found');
@@ -163,7 +166,7 @@ export class Controller {
 
     Promise.all([findOne, comparePassword]).then(([user, compareResult]) => {
       if (compareResult) {
-        const token = JwtService.generateToken(req.phoneNum, user._id);
+        const token = JwtService.generateToken(req.body.phoneNum, user._id);
         res.status(201).json({ success: true, token, userId: user._id });
       } else {
         res.boom.unauthorized('incorrect password');
