@@ -24,7 +24,7 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: Authorization
+        - name: token
           in: header
           required: true
           type: string
@@ -94,10 +94,12 @@ paths:
           description: 'Invalid Request, or wrong verification code'
         '401':
           description: 'Fail to verify verification code, it may goes expired or wrong'
+        '403':
+          description: 'The phone number already exist'
         '500':
           description: Server internal error
   /account:
-    post:
+    put:
       tags:
         - account
       summary: Register a account Account
@@ -108,7 +110,7 @@ paths:
         - application/json
       parameters:
         - name: token
-          in: query
+          in: header
           description: temperoy token issued by the server for Account registeration
           required: true
           type: string
@@ -366,9 +368,9 @@ definitions:
   AccountCreation:
     type: object
     properties:
-      token:
-        type: string
       accountId:
+        type: string
+      phoneNum:
         type: string
       password:
         type: string

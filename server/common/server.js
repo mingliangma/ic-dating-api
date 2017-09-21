@@ -9,9 +9,15 @@ import l from './logger';
 
 const app = new Express();
 const morgan = require('morgan');
+const mongoose = require('mongoose');
+const boom = require('express-boom');
 
 export default class ExpressServer {
   constructor() {
+    l.info('process.env.DATABASE_URL=', process.env.DATABASE_URI);
+    mongoose.connect(process.env.DATABASE_URI.toString()); // connect to database
+
+
     const root = path.normalize(`${__dirname}/../..`);
     app.set('appPath', `${root}client`);
 
@@ -26,6 +32,8 @@ export default class ExpressServer {
 
     app.use(cookieParser(process.env.SESSION_SECRET));
     app.use(Express.static(`${root}/build/public`));
+
+    app.use(boom());
   }
 
   router(routes) {

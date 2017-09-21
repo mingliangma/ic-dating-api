@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 const s = require('shelljs');
 
 s.rm('-rf', 'build');

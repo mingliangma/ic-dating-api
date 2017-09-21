@@ -1,4 +1,7 @@
 import l from '../../common/logger';
+import User from '../../model/user';
+
+const Promise = require('bluebird');
 
 class AccountService {
   me() {
@@ -26,19 +29,67 @@ class AccountService {
     return result;
   }
 
-  phoneVerification(phoneNum) {
-    if (phoneNum === '0000000000') {
-      return { isNumExist: true, message: 'Account already exist and account can use password to login' };
-    }
-    return { isNumExist: false, message: 'Verification code sent, and record created, regardless whether user has sent the reuqest before' };
+  createAccount(phoneNum) {
+    return new Promise((resolve, reject) => {
+      // create a user
+      const u = new User({
+        phone_num: phoneNum,
+      });
+
+      // save the user
+      u.save((err, user) => {
+        if (!err) {
+          resolve(user);
+        } else {
+          reject(err);
+        }
+      });
+    });
   }
 
-  codeVerify(phoneNum, code) {
-    return { token: '1asdfasdf2' };
+  updateAccount(userInfo) {
+    return new Promise((resolve, reject) => {
+      const findById = Promise.promisify(User.findById);
+
+      findById(userInfo.accountId)
+        .then(user => {
+          if (!user) {
+            console.log('user not found');
+            throw new Error('user not found');
+          } else {
+            console.log('11111');
+            const u = user;
+            if (userInfo.password) u.password = userInfo.password;
+            if (userInfo.display_name) u.display_name = userInfo.displayName;
+            if (userInfo.ethnicity) u.ethnicity = userInfo.ethnicity;
+            if (userInfo.dateOfBirth) u.dateOfBirth = userInfo.dateOfBirth;
+            if (userInfo.gender) u.gender = userInfo.gender;
+            return u.save();
+          }
+        })
+        .then(user => {
+          console.log('succesfully saved user info');
+          resolve(user);
+        })
+        .catch(err => {
+          console.log('save error', err.message);
+          reject(err);
+        });
+    });
   }
 
-  createAccount() {
-    return { token: '1asdfasdf2' };
+  findOnePromise() {
+    return Promise.promisify(User.findOne);
+  }
+
+
+  accountExist(phoneNum) {
+    User.findOne({ phone_num: phoneNum }, (err, user) => {
+      if (!user) {
+        return false;
+      }
+      return true;
+    });
   }
 
   login() {
