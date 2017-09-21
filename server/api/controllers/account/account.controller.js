@@ -3,11 +3,13 @@ import AccountService from '../../services/account.service';
 import SmsService from '../../services/sms.service';
 import OtpService from '../../services/otp.service';
 import JwtService from '../../services/jwt.service';
+import PasswordService from '../../services/password.service';
 import l from '../../../common/logger';
 import User from '../../../model/user';// get our mongoose model
 
 const jwt = require('jsonwebtoken');
 const Promise = require('bluebird');
+
 const boom = require('express-boom');
 const { validationResult } = require('express-validator/check');
 
@@ -124,7 +126,7 @@ export class Controller {
           throw new Error('JWT validated correctly but the user record is not found');
         } else {
           const u = user;
-          if (req.body.password) u.password = req.body.password;
+          if (req.body.password) u.password = PasswordService.cryptPasswordSync(req.body.password);
           if (req.body.display_name) u.display_name = req.body.displayName;
           if (req.body.ethnicity) u.ethnicity = req.body.ethnicity;
           if (req.body.dateOfBirth) u.dateOfBirth = req.body.dateOfBirth;
@@ -146,9 +148,28 @@ export class Controller {
   }
 
   login(req, res) {
-    const result = AccountService.login();
-    res.status(201);
-    res.json(result);
+    // const userFindOne = Promise.promisify(User.findOne);
+    // const findOne = userFindOne({ phone_num: req.body.phoneNum });
+    const findOne = AccountService.findOnePromise(req.body.phoneNum);
+    const comparePassword = findOne.then(user => {
+      if (user) {
+        return PasswordService.comparePassword(user.password, req.body.password);
+      }
+      throw new Error('incorrect phone number');
+    }).catch(err => {
+      res.boom.unauthorized(err.message);
+      comparePassword.cancel();
+    });
+
+    Promise.all([findOne, comparePassword]).then(([user, compareResult]) => {
+      if (compareResult) {
+        const token = JwtService.generateToken(req.phoneNum, user._id);
+        res.status(201).json({ success: true, token, userId: user._id });
+      } else {
+        res.boom.unauthorized('incorrect password');
+      }
+    });
   }
 }
+
 export default new Controller();

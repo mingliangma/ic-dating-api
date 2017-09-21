@@ -78,8 +78,16 @@ class AccountService {
     });
   }
 
-  findOnePromise() {
-    return Promise.promisify(User.findOne);
+  findOnePromise(phoneNum) {
+    return new Promise((resolve, reject) => {
+      User.findOne({ phone_num: phoneNum }, (err, user) => {
+        if (user) {
+          resolve(user);
+        } else {
+          reject(err);
+        }
+      });
+    });
   }
 
 

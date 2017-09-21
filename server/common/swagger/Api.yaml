@@ -323,7 +323,7 @@ definitions:
   Login:
     type: object
     properties:
-      account:
+      phoneNum:
         type: string
       password:
         type: string
