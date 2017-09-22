@@ -305,6 +305,20 @@ paths:
           description: Invalid username supplied
         404:
           description: User not found
+  /sign:
+    get:
+      tags:
+        - sign
+      summary: Get all signs
+      description: ''
+      operationId: getSigns
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: List of signs
 
 definitions:
   Token:
