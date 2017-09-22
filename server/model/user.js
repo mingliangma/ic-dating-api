@@ -13,5 +13,5 @@ module.exports = mongoose.model('User', new Schema({
   dateOfBirth: Date,
   gender: String,
   picture_url: [String],
-  _sign_id: [Schema.Types.ObjectId],
+  sign_id: [Schema.Types.ObjectId],
 }));

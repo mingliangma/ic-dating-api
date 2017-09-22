@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
 const Promise = require('bluebird');
+import l from '../../common/logger';
 
 module.exports.generateToken = (phoneNum, accountId) => {
+  l.debug('phoneNum: ', phoneNum, ' accountId: ', accountId);
   const tokenData = {
     phoneNum,
     accountId,

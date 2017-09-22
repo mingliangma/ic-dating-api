@@ -51,25 +51,41 @@ export class Controller {
   }
 
   verifyPhone(req, res) {
+    //
+    // l.debug(req.params.phoneNum);
+    // l.debug(req.phoneNum);
     // check if account already created
-    if (AccountService.accountExist(req.phoneNum)) {
-      res.status(200).json({ message: 'Account already exist and account can use password to login' });
-      return;
-    }
-
-    // generate OTP code
-    const token = OtpService.generateToken();
-    l.info(`IC Code: ${token}`);
-
-    // send OTP code to user through SMS
-    SmsService.sendSms(req.params.phoneNum, `IC Code: ${token}`)
-      .then(message => {
+    const p = AccountService.accountExist(req.params.phoneNum)
+      .then(isAccountExist => {
+        if (isAccountExist && !req.query.disablePasswordLogin) {
+          res.status(200).json({ message: 'Account already exist and account can use password to login' });
+          p.cancel();
+        } else {
+          Promise.resolve();
+        }
+      })
+      .then(() => {
+        // generate OTP code
+        const token = OtpService.generateToken();
+        l.debug(`IC Code: ${token}`);
+        if (req.query.disableSMS) {
+          l.debug('SMS service is disabled');
+          res.status(201).json({ codeForTesting: token, success: true });
+          p.cancel();
+        }
+        return Promise.resolve(token);
+      })
+      .then(token =>
+        // send OTP code to user through SMS
+        Promise.all([token, SmsService.sendSms(req.params.phoneNum, `IC Code: ${token}`)]),
+      )
+      .then(([token, message]) => {
         res.status(201);
         res.json({ codeForTesting: token, success: true, message: `Verification code sent, messageId is ${message.sid}` });
       })
       .catch(err => {
         console.log('err: ', err);
-        res.boom.badRequest(err);
+        res.boom.badRequest(err.message);
       });
   }
 

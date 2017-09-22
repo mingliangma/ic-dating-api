@@ -52,6 +52,16 @@ paths:
           description: Phone number of current account. The number must be in the E.164 Format. Eg. +14155552671 for Country Code 1, +442071838750 for Country Code 44.
           required: true
           type: string
+        - in: query
+          name: disableSMS
+          type: boolean
+          description: if true send SMS is disabled. The OTP code can be retrieve through API response.
+          default: false
+        - in: query
+          name: disablePasswordLogin
+          type: boolean
+          description: if true, the API will force to return a OTP code
+          default: false
       responses:
         '200':
           description: Account already exist and account can use password to login
@@ -153,28 +163,6 @@ paths:
             $ref: '#/definitions/Token'
         '401':
           description: Fail to login
-  # /account/logout:
-  #   post:
-  #     tags:
-  #     - account
-  #     summary: Login a account Account
-  #     operationId: logoutAccount
-  #     consumes:
-  #       - application/json
-  #     produces:
-  #       - application/json
-  #     parameters:
-  #       - name: Authorization
-  #         in: header
-  #         required: true
-  #         type: string
-  #     responses:
-  #       '200':
-  #         description: Successfully logout
-  #       '400':
-  #         description: Error during logout
-  #       '401':
-  #         description: Unauthorized request
   /account/{acountId}:
     get:
       tags:
@@ -210,6 +198,10 @@ paths:
       - name: acountId
         in: path
         description: acountId that need to be updated
+        required: true
+        type: string
+      - name: token
+        in: header
         required: true
         type: string
       - in: body
@@ -353,18 +345,10 @@ definitions:
   AccountWithToken:
     type: object
     properties:
-      token:
-        type: string
-      displayName:
-        type: string
-      ethnicity:
-        type: string
-      dateOfBirth:
-        type: string
-      gender:
-        type: string
-      avatarUrl:
-        type: string
+      signIds:
+        type: array
+        items:
+            type: integer
   AccountCreation:
     type: object
     properties:

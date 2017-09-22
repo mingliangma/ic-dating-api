@@ -90,15 +90,28 @@ class AccountService {
     });
   }
 
-
   accountExist(phoneNum) {
-    User.findOne({ phone_num: phoneNum }, (err, user) => {
-      if (!user) {
-        return false;
-      }
-      return true;
+    return new Promise(resolve => {
+      User.findOne({ phone_num: phoneNum }, (err, user) => {
+        if (user) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
     });
   }
+
+
+  // accountExist(phoneNum) {
+  //   l.debug('check this phone number exist:', phoneNum);
+  //   User.findOne({ phone_num: phoneNum }, (err, user) => {
+  //     if (!user) {
+  //       return false;
+  //     }
+  //     return true;
+  //   });
+  // }
 
   login() {
     return { token: '1asdfasdf2' };
