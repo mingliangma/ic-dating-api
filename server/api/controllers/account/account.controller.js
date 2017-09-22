@@ -189,6 +189,13 @@ export class Controller {
       }
     });
   }
+
+  list(req, res){
+    User.find({}, (err, users) => {
+      console.log(users);
+      res.status(200).json(users);
+    });
+  }
 }
 
 export default new Controller();

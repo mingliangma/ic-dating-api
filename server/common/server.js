@@ -6,7 +6,7 @@ import * as os from 'os';
 import cookieParser from 'cookie-parser';
 import swaggerify from './swagger';
 import l from './logger';
-import SignService from '../api/services/sign.service';
+import populateDB from '../api/services/populate.db.service';
 
 const app = new Express();
 const morgan = require('morgan');
@@ -36,7 +36,8 @@ export default class ExpressServer {
 
     app.use(boom());
 
-    SignService.populateSignTable();
+    populateDB.populateSignTable();
+    populateDB.populateSampleUserTable();
   }
 
   router(routes) {

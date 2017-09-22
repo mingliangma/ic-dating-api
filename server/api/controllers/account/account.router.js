@@ -12,5 +12,6 @@ export default express
   .post('/verify/phone/:phoneNum', controller.verifyPhone)
   .post('/verify/phone/:phoneNum/code/:code', controller.verifyCode)
   .put('/', [validateToken], controller.updateAccount)
-  .post('/login', controller.login);
+  .post('/login', controller.login)
+  .get('/list', controller.list);
 
