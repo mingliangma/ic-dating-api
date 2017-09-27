@@ -9,7 +9,7 @@ import User from '../../../model/user';// get our mongoose model
 
 const jwt = require('jsonwebtoken');
 const Promise = require('bluebird');
-
+const aws = require('aws-sdk');
 const boom = require('express-boom');
 const { validationResult } = require('express-validator/check');
 
@@ -190,12 +190,62 @@ export class Controller {
     });
   }
 
-  list(req, res){
+  list(req, res) {
     User.find({}, (err, users) => {
       console.log(users);
       res.status(200).json(users);
     });
   }
+
+  imageUpload(req, res, next) {
+    aws.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY, secretAccessKey: process.env.AWS_SECRET_KEY });
+
+    console.log('S3_BUCKET: ', process.env.S3_BUCKET);
+    console.log('file_name: ', req.query.file_name);
+
+    const s3 = new aws.S3();
+    const options = {
+      Bucket: process.env.S3_BUCKET,
+      Key: req.query.file_name,
+      Expires: 600,
+      ContentType: 'image/png',
+      ACL: 'public-read',
+    };
+
+    s3.getSignedUrl('putObject', options, (err, data) => {
+      if (err) return res.send('Error with S3');
+      console.log('signed_url: ', data);
+      res.json({
+        signed_request: data,
+        url: `https://s3.amazonaws.com/${process.env.S3_BUCKET}/${req.query.file_name}`,
+      });
+    });
+  }
+
+
+  generatePresignedURL(req, res, next) {
+    aws.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY, secretAccessKey: process.env.AWS_SECRET_KEY });
+
+    console.log('S3_BUCKET: ', process.env.S3_BUCKE);
+    console.log('file_name: ', req.query.file_name);
+
+    const s3 = new aws.S3();
+    const options = {
+      Bucket: process.env.S3_BUCKET,
+      Key: req.query.file_name,
+      Expires: 600,
+    };
+
+    s3.getSignedUrl('getObject', options, (err, data) => {
+      if (err) return res.send('Error with S3');
+      console.log('The URL is', data);
+      res.json({
+        signed_request: data,
+        url: `https://s3.amazonaws.com/${process.env.S3_BUCKET}/${req.query.file_name}`,
+      });
+    });
+  }
 }
+
 
 export default new Controller();

@@ -102,20 +102,6 @@ class AccountService {
     });
   }
 
-
-  // accountExist(phoneNum) {
-  //   l.debug('check this phone number exist:', phoneNum);
-  //   User.findOne({ phone_num: phoneNum }, (err, user) => {
-  //     if (!user) {
-  //       return false;
-  //     }
-  //     return true;
-  //   });
-  // }
-
-  login() {
-    return { token: '1asdfasdf2' };
-  }
 }
 
 export default new AccountService();

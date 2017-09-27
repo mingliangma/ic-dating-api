@@ -12,6 +12,8 @@ const app = new Express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const boom = require('express-boom');
+const cors = require('cors');
+
 
 export default class ExpressServer {
   constructor() {
@@ -35,6 +37,8 @@ export default class ExpressServer {
     app.use(Express.static(`${root}/build/public`));
 
     app.use(boom());
+
+    app.options('*', cors())
 
     populateDB.populateSignTable();
     populateDB.populateSampleUserTable();
