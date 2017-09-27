@@ -239,12 +239,12 @@ paths:
           description: Invalid username supplied
         404:
           description: User not found
-  /account/{accountId}/image/upload:
+  /account/{accountId}/image/gen-presigned-url:
     get:
       tags:
       - account
       summary: To request that S3 generates a temporary URL where you can upload your file. This URL is valid only for 60 seconds, as per the Expires option.
-      operationId: saveImageByUserId
+      operationId: generatePresignedUrl
       produces:
         - application/json
       parameters:
@@ -253,15 +253,26 @@ paths:
         description: The account that needs to be fetched.
         required: true
         type: string
+      - name: fileName
+        in: query
+        description: The name of the file to be uploaded
+        required: true
+        type: string
+      - name: fileType
+        in: query
+        description: The type of the file to be uploaded in MIME format. eg. image/png, image/jpeg
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/ProfilePicture'
+            $ref: '#/definitions/GenPresignedUrlSuccessResponse'
         400:
           description: Invalid accountId supplied
         404:
           description: User not found
+
           
   /account/list:
     get:
@@ -408,3 +419,15 @@ definitions:
     properties:
       url:
         type: string
+
+  GenPresignedUrlSuccessResponse:
+    type: object
+    properties:
+      signedURL:
+        type: string
+        description: The AWS S3 pre-signed URL for put opertion.
+      fileLink:
+        type: string
+        description: The link to the file uploaded.
+
+

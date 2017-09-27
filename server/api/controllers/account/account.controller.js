@@ -3,6 +3,7 @@ import AccountService from '../../services/account.service';
 import SmsService from '../../services/sms.service';
 import OtpService from '../../services/otp.service';
 import JwtService from '../../services/jwt.service';
+import AwsService from '../../services/aws.service';
 import PasswordService from '../../services/password.service';
 import l from '../../../common/logger';
 import User from '../../../model/user';// get our mongoose model
@@ -197,53 +198,29 @@ export class Controller {
     });
   }
 
-  imageUpload(req, res, next) {
-    aws.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY, secretAccessKey: process.env.AWS_SECRET_KEY });
+  generatePutPreSignedURL(req, res) {
+    console.log('accountExistById: ');
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
 
-    console.log('S3_BUCKET: ', process.env.S3_BUCKET);
-    console.log('file_name: ', req.query.file_name);
-
-    const s3 = new aws.S3();
-    const options = {
-      Bucket: process.env.S3_BUCKET,
-      Key: req.query.file_name,
-      Expires: 600,
-      ContentType: 'image/png',
-      ACL: 'public-read',
-    };
-
-    s3.getSignedUrl('putObject', options, (err, data) => {
-      if (err) return res.send('Error with S3');
-      console.log('signed_url: ', data);
-      res.json({
-        signed_request: data,
-        url: `https://s3.amazonaws.com/${process.env.S3_BUCKET}/${req.query.file_name}`,
+    AccountService.accountExistById(req.params.accountId)
+      .then(result => {
+        console.log('accountExistById: ', result);
+      })
+      .then(() => AwsService.generatePutPreSignedURL(
+        req.query.fileName,
+        req.query.fileType,
+        req.params.accountId))
+      .then(({ signedURL, fileLink }) => {
+        res.status(200).json({ signedURL, fileLink });
+      })
+      .catch(err => {
+        console.error('error:', err.message);
+        res.boom.badimplementation(err.message);
       });
-    });
-  }
-
-
-  generatePresignedURL(req, res, next) {
-    aws.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY, secretAccessKey: process.env.AWS_SECRET_KEY });
-
-    console.log('S3_BUCKET: ', process.env.S3_BUCKE);
-    console.log('file_name: ', req.query.file_name);
-
-    const s3 = new aws.S3();
-    const options = {
-      Bucket: process.env.S3_BUCKET,
-      Key: req.query.file_name,
-      Expires: 600,
-    };
-
-    s3.getSignedUrl('getObject', options, (err, data) => {
-      if (err) return res.send('Error with S3');
-      console.log('The URL is', data);
-      res.json({
-        signed_request: data,
-        url: `https://s3.amazonaws.com/${process.env.S3_BUCKET}/${req.query.file_name}`,
-      });
-    });
   }
 }
 

@@ -3,12 +3,12 @@ const fs = require('fs');
 const AWS = require('aws-sdk');
 
 AWS.config.update({
-  accessKeyId: 'AKIAIFPWWJJ47NC5FSZQ',
-  secretAccessKey: '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',
+  accessKeyId: '',
+  secretAccessKey: '',
 });
 AWS.config.region = 'us-east-1';
 const s3 = new AWS.S3();
-const params = { Bucket: 'ic-dating', Key: 'test.png', Expires: 300, ContentType: 'image/png', ACL: 'public-read'};
+const params = { Bucket: 'ic-dating', Key: 'profiles/test.png', Expires: 300, ContentType: 'image/png', ACL: 'public-read'};
 const url = s3.getSignedUrl('putObject', params);
 
 console.log('signed URL: ', url);

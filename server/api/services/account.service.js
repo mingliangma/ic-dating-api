@@ -102,6 +102,21 @@ class AccountService {
     });
   }
 
+  accountExistById(accountId) {
+    console.log('accountExistById():accountId: ', accountId);
+
+    return new Promise((resolve, reject) => {
+      User.findById(accountId, (err, user) => {
+        if (user) {
+          resolve(true);
+        } else if (err) {
+          reject(err);
+        } else {
+          resolve(false);
+        }
+      });
+    });
+  }
 }
 
 export default new AccountService();

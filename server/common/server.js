@@ -12,7 +12,7 @@ const app = new Express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const boom = require('express-boom');
-const cors = require('cors');
+// const cors = require('cors');
 
 
 export default class ExpressServer {
@@ -38,7 +38,7 @@ export default class ExpressServer {
 
     app.use(boom());
 
-    app.options('*', cors())
+    // app.options('*', cors())
 
     populateDB.populateSignTable();
     populateDB.populateSampleUserTable();

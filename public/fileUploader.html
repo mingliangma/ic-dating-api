@@ -5,6 +5,10 @@
 </head>
 <body>
 <h1>Welcome!</h1>
+<br>Account ID:
+<input id="accountId">
+<br>
+
 <br>Please select an image
 <input type="file" id="image">
 <br>
@@ -34,9 +38,10 @@
     xhr.send(file)
   }
 
-  function sign_request(file, done) {
+  function sign_request(file, accountId, done) {
+    console.log("accountId: ", accountId)
     var xhr = new XMLHttpRequest()
-    xhr.open("GET", "/api/v1/account/12345/image/upload?file_name=" + file.name + "&file_type=" + file.type)
+    xhr.open("GET", "/api/v1/account/" + accountId + "/image/gen-presigned-url?fileName=" + file.name + "&fileType=" + file.type)
 
     xhr.onreadystatechange = function() {
       if(xhr.readyState === 4 && xhr.status === 200) {
@@ -66,11 +71,13 @@
 
   document.getElementById("image").onchange = function() {
     var file = document.getElementById("image").files[0]
+    var accountId = document.getElementById("accountId").value
     if (!file) return
+    if (!accountId) return
 
-    sign_request(file, function(response) {
-      upload(file, response.signed_request, response.url, function() {
-        document.getElementById("preview").src = response.url
+    sign_request(file, accountId, function(response) {
+      upload(file, response.signedURL, response.fileLink, function() {
+        document.getElementById("preview").src = response.fileLink
       })
     })
   }
