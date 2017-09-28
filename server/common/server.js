@@ -18,7 +18,10 @@ const boom = require('express-boom');
 export default class ExpressServer {
   constructor() {
     l.info('process.env.DATABASE_URL=', process.env.DATABASE_URI);
-    mongoose.connect(process.env.DATABASE_URI.toString()); // connect to database
+    // connect to database
+    mongoose.connect(process.env.DATABASE_URI.toString(), {
+      useMongoClient: true,
+    });
 
 
     const root = path.normalize(`${__dirname}/../..`);
