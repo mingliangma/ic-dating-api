@@ -6,12 +6,12 @@ import JwtService from '../../services/jwt.service';
 import AwsService from '../../services/aws.service';
 import PasswordService from '../../services/password.service';
 import l from '../../../common/logger';
-import User from '../../../model/user';// get our mongoose model
-
+import User from '../../../model/user';
+// get our mongoose model
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const Promise = require('bluebird');
-const aws = require('aws-sdk');
-const boom = require('express-boom');
+const dateFormat = require('dateformat');
 const { validationResult } = require('express-validator/check');
 
 Promise.config({
@@ -19,29 +19,39 @@ Promise.config({
   cancellation: true,
 });
 
+class UserNotFoundError extends Error {
+  constructor(s) {
+    super(s);
+  }
+}
+
+const generateAccountResponse = user => ({
+  accountId: user._id.toString(),
+  displayName: user.display_name,
+  ethnicity: user.ethnicity,
+  dateOfBirth: dateFormat(user.dateOfBirth, 'yyyy-mm-dd'),
+  gender: user.gender,
+  phoneNum: user.phone_num,
+  pictureUrl: user.picture_url,
+  signId: user.sign_id,
+});
+
 export class Controller {
   me(req, res) {
     console.log('token: ', req.headers.token);
-
-    // Get the validation result whenever you want; see the Validation Result API for all options!
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log(errors.mapped());
-      return res.status(422).json({ errors: errors.mapped() });
-    }
 
     JwtService.verifyToken(req.headers.token)
       .then(decoded => {
         l.debug(decoded);
         return User.findOne({ phone_num: decoded.phoneNum });
       })
-      .then(user => {
-        if (!user) {
-          throw new Error('JWT validated correctly but the user record is not found');
+      .then(u => {
+        if (!u) {
+          throw new UserNotFoundError();
         } else {
-          return res.json(user);
+          res.status(200).json(generateAccountResponse(u));
         }
-      }).catch(jwt.TokenExpiredError, err => {
+      }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
         res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
@@ -125,7 +135,45 @@ export class Controller {
       });
   }
 
+  initAccount(req, res) {
+    // Get the validation result whenever you want; see the Validation Result API for all options!
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
+    console.log('req.body.dateOfBirth: ', req.body.dateOfBirth);
+    JwtService.verifyToken(req.headers.token)
+      .then(decoded =>
+        User.findById(decoded.accountId),
+      ).then(user => {
+        if (!user) {
+          throw new UserNotFoundError();
+        } else {
+          const u = user;
+          if (req.body.password) u.password = PasswordService.cryptPasswordSync(req.body.password);
+          if (req.body.display_name) u.display_name = req.body.displayName;
+          if (req.body.ethnicity) u.ethnicity = req.body.ethnicity;
+          if (req.body.dateOfBirth) u.date_of_birth = req.body.dateOfBirth;
+          if (req.body.gender) u.gender = req.body.gender;
+          return u.save();
+        }
+      }).then(u => {
+        res.status(201).json(generateAccountResponse(u));
+      }).catch(jwt.TokenExpiredError, () => {
+        res.boom.unauthorized('TokenExpiredError: JWT token expired');
+      }).catch(jwt.JsonWebTokenError, err => {
+        res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
+      }).catch(err => {
+        l.error(err);
+        res.boom.badImplementation(err.message);
+      });
+  }
+
   updateAccount(req, res) {
+    console.log('req.headers.token: ', req.headers.token);
     // Get the validation result whenever you want; see the Validation Result API for all options!
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -133,49 +181,82 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
+    console.log('req.headers.token: ', req.headers.token);
     JwtService.verifyToken(req.headers.token)
       .then(decoded =>
-        // const userFindOne = Promise.promisify(User.findOne);
-        // userFindOne({ phone_num: decoded.phoneNum });
-        // const findById = Promise.promisify(User.findById);
-        // findById(decoded.accountId);
+
         User.findById(decoded.accountId),
       )
       .then(user => {
         if (!user) {
-          throw new Error('JWT validated correctly but the user record is not found');
+          throw new UserNotFoundError();
         } else {
           const u = user;
-          if (req.body.password) u.password = PasswordService.cryptPasswordSync(req.body.password);
-          if (req.body.display_name) u.display_name = req.body.displayName;
-          if (req.body.ethnicity) u.ethnicity = req.body.ethnicity;
-          if (req.body.dateOfBirth) u.dateOfBirth = req.body.dateOfBirth;
-          if (req.body.gender) u.gender = req.body.gender;
+          if (req.body.description) u.description = req.body.description;
+          if (req.body.signId) u.sign_id = req.body.signId;
+          if (req.body.pictureUrl) u.picture_url = req.body.pictureUrl;
           return u.save();
         }
-      }).then(user => {
-        // console.log('succesfully saved user info');
-        // console.log(user);
-        res.status(201).json(user);
-      }).catch(jwt.TokenExpiredError, err => {
+      }).then(u => {
+        res.status(201).json(generateAccountResponse(u));
+      }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
         res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
       }).catch(err => {
         l.error(err);
-        res.status(500).json({ error: err.message });
+        res.boom.badImplementation(err.message);
+      });
+  }
+
+  getAccountInfo(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
+
+    console.log('accountId: ', req.params.accountId);
+    console.log('accountId is valid: ', mongoose.Types.ObjectId.isValid(req.params.accountId));
+
+    AccountService.findOneByIdPromise(req.params.accountId)
+      .then(user => {
+        if (!user) {
+          throw new UserNotFoundError();
+        } else {
+          const u = user;
+          res.status(200).json(generateAccountResponse(u));
+        }
+      }).catch(jwt.TokenExpiredError, () => {
+        res.boom.unauthorized('TokenExpiredError: JWT token expired');
+      }).catch(jwt.JsonWebTokenError, err => {
+        res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
+      }).catch(err => {
+        l.error(err);
+        res.boom.badImplementation(err.message);
       });
   }
 
   login(req, res) {
-    // const userFindOne = Promise.promisify(User.findOne);
-    // const findOne = userFindOne({ phone_num: req.body.phoneNum });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
+
     const findOne = AccountService.findOnePromise(req.body.phoneNum);
     const comparePassword = findOne.then(user => {
       if (user) {
         return PasswordService.comparePassword(user.password, req.body.password);
       }
-      throw new Error('incorrect phone number');
+      throw new UserNotFoundError('phone number not found');
+    }).catch(UserNotFoundError, err => {
+      res.boom.unauthorized(err.message);
+      comparePassword.cancel();
     }).catch(err => {
       res.boom.unauthorized(err.message);
       comparePassword.cancel();
@@ -199,7 +280,6 @@ export class Controller {
   }
 
   generatePutPreSignedURL(req, res) {
-    console.log('accountExistById: ');
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log(errors.mapped());

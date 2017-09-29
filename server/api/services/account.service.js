@@ -83,8 +83,24 @@ class AccountService {
       User.findOne({ phone_num: phoneNum }, (err, user) => {
         if (user) {
           resolve(user);
-        } else {
+        } else if (err) {
           reject(err);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  findOneByIdPromise(accountId) {
+    return new Promise((resolve, reject) => {
+      User.findById(accountId, (err, user) => {
+        if (user) {
+          resolve(user);
+        } else if (err) {
+          reject(err);
+        } else {
+          resolve(null);
         }
       });
     });

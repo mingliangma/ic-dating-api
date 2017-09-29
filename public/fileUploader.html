@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Limitless Image Upload</title>
+    <title>IC Dating Image Upload Demo</title>
+    <style>
+        pre {padding: 16px;font-size: 85%;line-height: 1.45;background-color: #f6f8fa;}
+    </style>
 </head>
 <body>
 <h1>Welcome!</h1>
@@ -13,6 +16,38 @@
 <input type="file" id="image">
 <br>
 <img id="preview">
+
+<h2>How to use image upload APIs</h2>
+<h3>Image Upload from mobile app directly to AWS S3</h3>
+<p>These are the high level steps:</p>
+<ul>
+    <li>A file is selected for upload by the user in the mobile app;</li>
+    <li>The app makes a request to our IC server, which produces a temporary signature with which to sign the upload request to AWS S3 Bucket;</li>
+    <li>The temporary signed request is returned to the app in JSON format;</li>
+    <li>The app then uploads the file directly to Amazon S3 using the signed request supplied by our IC server.</li>
+</ul>
+<p><strong>IC Server API: Generate PreSigned URL</strong></p>
+<p>GET URL: /api/v1/account/$accountId/image/gen-presigned-url?fileName=$fileName&amp;fileType=$fileType</p>
+<pre lang="$xslt"><code>curl -X GET 'http://api.ic.kllect.com/api/v1/account/59c555ddddefe0ccdf86960a/image/gen-presigned-url?fileName=test.png&amp;fileType=image%2Fpng'
+</code></pre>
+<p>The expected result should be:</p>
+<pre><code>{
+    "signedURL": "https://ic-dating.s3.amazonaws.com/profiles/59c555ddddefe0ccdf86960a/test.png?AWSAccessKeyId=AKIAIFPWWJJ47NC5FSZQ&amp;Content-Type=image%2Fpng&amp;Expires=1506543054&amp;Signature=F8MfvFDRx7aX7OebjkvCGMUk0XU%3D&amp;x-amz-acl=public-read",
+    "fileLink": "https://s3.amazonaws.com/ic-dating/profiles/59c555ddddefe0ccdf86960a/test.png"
+}
+</code></pre>npm install markdown-to-html -g
+<p>Using the pre-signed url make a put request to aws:</p>
+<pre lang="$xslt"><code>const request = req({
+    method: 'PUT',
+    url: ${signedURL},
+    body: file,
+    headers: {
+      'Content-Type': 'image/png',
+    },
+  }, (err1, res, body) =&gt; {
+    console.log(body);
+  });
+</code></pre>
 
 <script>
 

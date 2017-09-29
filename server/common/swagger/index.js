@@ -39,6 +39,7 @@ export default function (app, routes) {
 
     // Error handler to display the validation error as HTML
     app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars, no-shadow
+      console.error('Swagger Validation Error: ', err);
       res.status(err.status || 500);
       res.json({ error: err.message });
       // res.send(

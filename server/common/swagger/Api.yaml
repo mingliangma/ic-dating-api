@@ -112,7 +112,7 @@ paths:
     put:
       tags:
         - account
-      summary: Register a account Account
+      summary: Initialize an account with mandatory information, and respond with a web token
       operationId: registerAccount
       consumes:
         - application/json
@@ -163,7 +163,7 @@ paths:
             $ref: '#/definitions/Token'
         '401':
           description: Fail to login
-  /account/{acountId}:
+  /account/{accountId}:
     get:
       tags:
       - account
@@ -172,7 +172,7 @@ paths:
       produces:
         - application/json
       parameters:
-      - name: acountId
+      - name: accountId
         in: path
         description: The account that needs to be fetched.
         required: true
@@ -195,12 +195,13 @@ paths:
       produces:
       - application/json
       parameters:
-      - name: acountId
+      - name: accountId
         in: path
         description: acountId that need to be updated
         required: true
         type: string
       - name: token
+        description: The web token returned at login or registration
         in: header
         required: true
         type: string
@@ -209,8 +210,12 @@ paths:
         description: Updated account object
         required: true
         schema:
-          $ref: '#/definitions/AccountWithToken'
+          $ref: '#/definitions/AccountUpdate'
       responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/AccountVM'
         400:
           description: Invalid account supplied
         404:
@@ -360,28 +365,30 @@ definitions:
         type: string
       distance:
         type: integer
-      pictures:
+      pictureUrl:
         type: array
         items:
           $ref: '#/definitions/ProfilePicture'
-      signs:
+      signId:
         type: array
         items:
           $ref: '#/definitions/Sign'
-  AccountWithToken:
+  AccountUpdate:
     type: object
     properties:
-      signIds:
+      signId:
         type: array
         items:
             type: integer
+      description:
+        type: string
+      pictureUrl:
+        type: array
+        items:
+          type: string
   AccountCreation:
     type: object
     properties:
-      accountId:
-        type: string
-      phoneNum:
-        type: string
       password:
         type: string
       displayName:
@@ -391,8 +398,6 @@ definitions:
       dateOfBirth:
         type: string
       gender:
-        type: string
-      avatar:
         type: string
   Sign:
     type: object
