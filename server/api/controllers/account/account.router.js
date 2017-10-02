@@ -12,7 +12,7 @@ const validateDateOfBirth = check('dateOfBirth', 'the date should be in the form
   .matches(/(\d)(\d)(\d)(\d)(-)(\d)(\d)(-)(\d)(\d)/);
 const validateGender = check('gender', 'Enter male or female').isIn(['male', 'female']);
 const validateEthnicity = check('ethnicity', 'Enter asian, black, latin, indian, native-american, caucasian, and other')
-  .isIn(['asian', 'black', 'latin', 'native-american', 'caucasian', 'other']);
+  .isIn(['asian', 'black', 'latin', 'native_american', 'caucasian', 'other']);
 const validateAccountId = check('accountId', 'Enter a valid account ID').custom(value => mongoose.Types.ObjectId.isValid(value));
 const validateFileType = check('fileType', 'Enter a valid file Type, eg. image/png').exists();
 const validateFileName = check('fileName', 'Enter a valid file Name, eg. me.png').exists();

@@ -344,10 +344,26 @@ export class Controller {
   }
 
   list(req, res) {
-    User.find({}, (err, users) => {
-      console.log(users);
-      res.status(200).json(users);
+
+    User.find({}).populate('sign').exec((err, users) => {
+      // console.log(users);
+      const responseArray = [];
+      for (let i = 0; i < users.length; i++) {
+        responseArray.push(generateAccountResponse(users[i]));
+      }
+
+      res.status(200).json(responseArray);
     });
+
+    // User.find({}, (err, users) => {
+    //   console.log(users);
+    //   const responseArray = [];
+    //   for (let i = 0; i < users.length; i++) {
+    //     responseArray.push(generateAccountResponse(users[i]));
+    //   }
+    //
+    //   res.status(200).json(responseArray);
+    // });
   }
 
   generatePutPreSignedURL(req, res) {
