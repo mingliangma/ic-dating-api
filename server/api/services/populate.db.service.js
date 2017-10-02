@@ -69,14 +69,14 @@ module.exports.populate = () => {
   const signs = [];
 
   for (let i = 0; i < signInfoArray.length; i += 1) {
-    console.log('i=', i, '  sign: ', signInfoArray[i].sign_name);
+    // console.log('i=', i, '  sign: ', signInfoArray[i].sign_name);
     signs.push(new Sign(signInfoArray[i]).save());
   }
 
   Promise.all(signs).then(results => {
-    console.log('results: ', results);
+    // console.log('results: ', results);
     results.forEach(sign => {
-      console.log('set signMap: ', sign.sign_id);
+      // console.log('set signMap: ', sign.sign_id);
       signMap.set(sign.sign_id, sign);
     });
 
@@ -148,7 +148,7 @@ module.exports.populate = () => {
     }).save();
   })
     .catch(err => {
-      console.error(err.message);
+      // console.error(err.message);
     });
 };
 
