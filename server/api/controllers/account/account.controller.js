@@ -7,6 +7,7 @@ import AwsService from '../../services/aws.service';
 import PasswordService from '../../services/password.service';
 import l from '../../../common/logger';
 import User from '../../../model/user';
+import Sign from '../../../model/sign';
 // get our mongoose model
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
@@ -25,16 +26,57 @@ class UserNotFoundError extends Error {
   }
 }
 
-const generateAccountResponse = user => ({
-  accountId: user._id.toString(),
-  displayName: user.display_name,
-  ethnicity: user.ethnicity,
-  dateOfBirth: dateFormat(user.dateOfBirth, 'yyyy-mm-dd'),
-  gender: user.gender,
-  phoneNum: user.phone_num,
-  pictureUrl: user.picture_url,
-  signId: user.sign_id,
-});
+class SignNotFoundError extends Error {
+  constructor(s) {
+    super(s);
+  }
+}
+
+function generateAccountResponse(user) {
+  let response = {};
+  const signResponse = [];
+  if (user) {
+    if (user.sign.length > 0) {
+      for (let i = 0; i < user.sign.length; i++) {
+        console.info(user.sign[0]);
+        signResponse.push({
+          signId: user.sign[i].sign_id,
+          signName: user.sign[i].sign_name,
+          signIconUrl: user.sign[i].sign_icon_url,
+        });
+      }
+    }
+
+    response = {
+      accountId: user._id.toString(),
+      displayName: user.display_name,
+      ethnicity: user.ethnicity,
+      dateOfBirth: dateFormat(user.date_of_birth, 'yyyy-mm-dd'),
+      gender: user.gender,
+      phoneNum: user.phone_num,
+      pictureUrl: user.picture_url,
+      signId: signResponse,
+    };
+  }
+  return response;
+}
+
+// const generateAccountResponse = user => (
+//
+//
+//
+// // let response = {
+// //   accountId: user._id.toString(),
+// //   displayName: user.display_name,
+// //   ethnicity: user.ethnicity,
+// //   dateOfBirth: dateFormat(user.date_of_birth, 'yyyy-mm-dd'),
+// //   gender: user.gender,
+// //   phoneNum: user.phone_num,
+// //   pictureUrl: user.picture_url,
+// //   signId: user.sign,
+// // }
+//
+// );
 
 export class Controller {
   me(req, res) {
@@ -43,11 +85,11 @@ export class Controller {
     JwtService.verifyToken(req.headers.token)
       .then(decoded => {
         l.debug(decoded);
-        return User.findOne({ phone_num: decoded.phoneNum });
+        return AccountService.findOneAndPopulate('phone_num', decoded.phoneNum, 'sign');
       })
       .then(u => {
         if (!u) {
-          throw new UserNotFoundError();
+          throw new UserNotFoundError('User not found');
         } else {
           res.status(200).json(generateAccountResponse(u));
         }
@@ -119,6 +161,7 @@ export class Controller {
         console.log('generateToken1');
         const token = JwtService.generateToken(phoneNum, user._id);
         res.status(201).json({ success: true, token, userId: user._id });
+        p.cancel();
       }).catch(err => {
         if (err.code === 11000 || err.code === 11001) {
           console.log('Phone number already exist');
@@ -150,9 +193,11 @@ export class Controller {
         if (!user) {
           throw new UserNotFoundError();
         } else {
+          console.log('req.body.displayName: ', req.body.displayName);
+
           const u = user;
           if (req.body.password) u.password = PasswordService.cryptPasswordSync(req.body.password);
-          if (req.body.display_name) u.display_name = req.body.displayName;
+          if (req.body.displayName) u.display_name = req.body.displayName;
           if (req.body.ethnicity) u.ethnicity = req.body.ethnicity;
           if (req.body.dateOfBirth) u.date_of_birth = req.body.dateOfBirth;
           if (req.body.gender) u.gender = req.body.gender;
@@ -181,24 +226,50 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
-    console.log('req.headers.token: ', req.headers.token);
+    console.log('signId: ', req.body.signId);
     JwtService.verifyToken(req.headers.token)
-      .then(decoded =>
+      .then(decoded => {
+        if (req.body.signId) {
+          const promiseArray = [User.findById(decoded.accountId)];
+          for (let j = 0; j < req.body.signId.length; j++) {
+            promiseArray.push(Sign.findOne({ sign_id: req.body.signId[j] }));
+          }
 
-        User.findById(decoded.accountId),
-      )
-      .then(user => {
-        if (!user) {
+          return Promise.all(promiseArray);
+        }
+        return User.findById(decoded.accountId);
+      })
+      .then(result => {
+        if (result instanceof Array) {
+          if (!result[0]) {
+            throw new UserNotFoundError();
+          }
+          if (!result[1]) {
+            throw new SignNotFoundError();
+          }
+
+          const u = result[0];
+          const signArray = [];
+          for (let i = 1; i < result.length; i++) {
+            signArray.push(result[i]);
+          }
+
+          if (req.body.description) u.description = req.body.description;
+          if (req.body.signId) u.sign = signArray;
+          if (req.body.pictureUrl) u.picture_url = req.body.pictureUrl;
+          return u.save();
+        }
+
+        if (!result) {
           throw new UserNotFoundError();
         } else {
-          const u = user;
+          const u = result;
           if (req.body.description) u.description = req.body.description;
-          if (req.body.signId) u.sign_id = req.body.signId;
           if (req.body.pictureUrl) u.picture_url = req.body.pictureUrl;
           return u.save();
         }
       }).then(u => {
-        res.status(201).json(generateAccountResponse(u));
+        res.status(200).json(generateAccountResponse(u));
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
@@ -248,7 +319,7 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
-    const findOne = AccountService.findOnePromise(req.body.phoneNum);
+    const findOne = AccountService.findOnePromise('phone_num', req.body.phoneNum);
     const comparePassword = findOne.then(user => {
       if (user) {
         return PasswordService.comparePassword(user.password, req.body.password);

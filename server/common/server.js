@@ -43,8 +43,7 @@ export default class ExpressServer {
 
     // app.options('*', cors())
 
-    populateDB.populateSignTable();
-    populateDB.populateSampleUserTable();
+    populateDB.populate();
   }
 
   router(routes) {

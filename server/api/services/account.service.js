@@ -78,9 +78,27 @@ class AccountService {
     });
   }
 
-  findOnePromise(phoneNum) {
+  findOneAndPopulate(fieldName, value, populateField) {
+    console.info({ [fieldName]: value });
     return new Promise((resolve, reject) => {
-      User.findOne({ phone_num: phoneNum }, (err, user) => {
+      User.findOne({ [fieldName]: value })
+        .populate(populateField)
+        .exec((err, user) => {
+          if (user) {
+            resolve(user);
+          } else if (err) {
+            l.debug(err);
+            reject(err);
+          } else {
+            resolve(null);
+          }
+        });
+    });
+  }
+
+  findOnePromise(fieldName, phoneNum) {
+    return new Promise((resolve, reject) => {
+      User.findOne({ [fieldName]: phoneNum }, (err, user) => {
         if (user) {
           resolve(user);
         } else if (err) {

@@ -208,7 +208,6 @@ paths:
       - in: body
         name: body
         description: Updated account object
-        required: true
         schema:
           $ref: '#/definitions/AccountUpdate'
       responses:
@@ -406,7 +405,7 @@ definitions:
         type: integer
       signName:
         type: string
-      signAvatarUrl:
+      signIconUrl:
         type: string
       order:
         type: integer
