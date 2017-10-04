@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node ./build/main",
     "compile": "node build.js && backpack build",
-    "dev": "node build.js && backpack dev | pino -o 'short'"
+    "dev": "node build.js && backpack dev | pino -o 'short'",
+    "test": "NODE_ENV=test mocha --require babel-register test/*.js",
+    "deploy": "npm run compile && eb deploy"
   },
   "dependencies": {
     "aws-sdk": "^2.122.0",
@@ -31,11 +33,15 @@
   "devDependencies": {
     "babel-eslint": "^7.2.3",
     "babel-preset-env": "^1.6.0",
+    "babel-register": "^6.26.0",
     "backpack-core": "^0.4.2",
+    "chai": "^4.1.2",
     "eslint": "^4.5.0",
     "eslint-config-airbnb-base": "^11.3.2",
     "eslint-plugin-import": "^2.7.0",
-    "shelljs": "^0.7.8"
+    "mocha": "^3.5.3",
+    "shelljs": "^0.7.8",
+    "supertest": "^3.0.0"
   },
   "author": "Carmine DiMascio <cdimascio@gmail.com> (https://github.com/cdimascio)"
 }

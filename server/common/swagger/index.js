@@ -2,7 +2,13 @@ import middleware from 'swagger-express-middleware';
 import * as path from 'path';
 
 export default function (app, routes) {
-  middleware(path.join('build', __dirname, 'Api.yaml'), app, (err, mw) => {
+  let apiSpecPath = '';
+  if (process.env.NODE_ENV === 'test') {
+    apiSpecPath = path.join(__dirname, 'Api.yaml');
+  } else {
+    apiSpecPath = path.join('build', __dirname, 'Api.yaml');
+  }
+  middleware(apiSpecPath, app, (err, mw) => {
     // Enable Express' case-sensitive and strict options
     // (so "/entities", "/Entities", and "/Entities/" are all different)
     app.enable('case sensitive routing');

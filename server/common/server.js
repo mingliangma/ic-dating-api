@@ -5,19 +5,22 @@ import * as http from 'http';
 import * as os from 'os';
 import cookieParser from 'cookie-parser';
 import swaggerify from './swagger';
-import l from './logger';
+
+
 import populateDB from '../api/services/populate.db.service';
 
 const app = new Express();
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const boom = require('express-boom');
+const l = require('pino')();
+
 // const cors = require('cors');
 
 
 export default class ExpressServer {
   constructor() {
-    l.info('process.env.DATABASE_URL=', process.env.DATABASE_URI);
+    // l.info('process.env.DATABASE_URL=', process.env.DATABASE_URI);
     // connect to database
     mongoose.connect(process.env.DATABASE_URI.toString(), {
       useMongoClient: true,

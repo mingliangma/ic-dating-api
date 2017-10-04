@@ -221,11 +221,11 @@ paths:
           description: Account not found
           
   /account/{accountId}/image:
-    get:
+    put:
       tags:
       - account
-      summary: Get account profile images by account ID
-      operationId: getImagesByUserId
+      summary: Add a new picture url to the account
+      operationId: addPhoto
       produces:
         - application/json
       parameters:
@@ -234,13 +234,71 @@ paths:
         description: The account that needs to be fetched.
         required: true
         type: string
+      - name: token
+        description: The web token returned at login or registration
+        in: header
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: The picture url to be added
+        schema:
+          type: object
+          required:
+            - pictureUrl
+          properties:
+            pictureUrl:
+              type: string
       responses:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/ProfilePictureList'
-        400:
-          description: Invalid username supplied
+            type: object
+            properties:
+              pictureUrl:
+                type: string
+        401:
+          description: Invalid token
+        404:
+          description: User not found
+    delete:
+      tags:
+      - account
+      summary: delete picture url from the account
+      operationId: addPhoto
+      produces:
+        - application/json
+      parameters:
+      - name: accountId
+        in: path
+        description: The account that needs to be fetched.
+        required: true
+        type: string
+      - name: token
+        description: The web token returned at login or registration
+        in: header
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: The picture url to be removed
+        schema:
+          type: object
+          required:
+            - pictureUrl
+          properties:
+            pictureUrl:
+              type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              pictureUrl:
+                type: string
+        401:
+          description: Invalid token
         404:
           description: User not found
   /account/{accountId}/image/gen-presigned-url:
@@ -316,7 +374,12 @@ paths:
         '200':
           description: successful operation
           schema:
-            $ref: '#/definitions/AccountVM'
+            type: object
+            properties:
+              pictureUrl:
+                type: array
+                items:
+                  type: string
         400:
           description: Invalid username supplied
         404:
@@ -367,7 +430,11 @@ definitions:
       pictureUrl:
         type: array
         items:
-          $ref: '#/definitions/ProfilePicture'
+          type: string
+      pictureThumbnailUrl:
+        type: array
+        items:
+          type: string
       signId:
         type: array
         items:
@@ -416,7 +483,7 @@ definitions:
       pictures:
         type: array
         items:
-          $ref: '#/definitions/ProfilePicture'
+          type: string
           
   ProfilePicture:
     type: object

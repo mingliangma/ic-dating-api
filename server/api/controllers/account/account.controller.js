@@ -38,12 +38,28 @@ function generateAccountResponse(user) {
   if (user) {
     if (user.sign.length > 0) {
       for (let i = 0; i < user.sign.length; i++) {
-        console.info(user.sign[0]);
+        // console.info(user.sign[0]);
         signResponse.push({
           signId: user.sign[i].sign_id,
           signName: user.sign[i].sign_name,
           signIconUrl: user.sign[i].sign_icon_url,
         });
+      }
+    }
+
+    const pictureThumbnailUrlArray = [];
+    const pictureUrlArray = [];
+    if (user.picture_url.length > 0) {
+      for (let i = 0; i < user.picture_url.length; i++) {
+        const pictureUrl = user.picture_url[i];
+        const pictureThumbnailUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/resized/cropped-to-square${
+          pictureUrl.substring(pictureUrl.lastIndexOf('/'))}`;
+        const pictureMediumUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/reduced${
+          pictureUrl.substring(pictureUrl.lastIndexOf('/'))}`;
+
+        console.log('pictureThumbnailUrl: ', pictureThumbnailUrl);
+        pictureThumbnailUrlArray.push(pictureThumbnailUrl);
+        pictureUrlArray.push(pictureMediumUrl);
       }
     }
 
@@ -54,39 +70,24 @@ function generateAccountResponse(user) {
       dateOfBirth: dateFormat(user.date_of_birth, 'yyyy-mm-dd'),
       gender: user.gender,
       phoneNum: user.phone_num,
-      pictureUrl: user.picture_url,
+      pictureUrl: pictureUrlArray,
+      pictureThumbnailUrl: pictureThumbnailUrlArray,
+      description: user.description,
       signId: signResponse,
     };
   }
   return response;
 }
 
-// const generateAccountResponse = user => (
-//
-//
-//
-// // let response = {
-// //   accountId: user._id.toString(),
-// //   displayName: user.display_name,
-// //   ethnicity: user.ethnicity,
-// //   dateOfBirth: dateFormat(user.date_of_birth, 'yyyy-mm-dd'),
-// //   gender: user.gender,
-// //   phoneNum: user.phone_num,
-// //   pictureUrl: user.picture_url,
-// //   signId: user.sign,
-// // }
-//
-// );
-
 export class Controller {
   me(req, res) {
-    console.log('token: ', req.headers.token);
+    // console.log('token: ', req.headers.token);
 
     JwtService.verifyToken(req.headers.token)
-      .then(decoded => {
-        l.debug(decoded);
-        return AccountService.findOneAndPopulate('phone_num', decoded.phoneNum, 'sign');
-      })
+      .then(decoded =>
+        // l.debug(decoded);
+        AccountService.findOneAndPopulate('phone_num', decoded.phoneNum, 'sign'),
+      )
       .then(u => {
         if (!u) {
           throw new UserNotFoundError('User not found');
@@ -108,9 +109,10 @@ export class Controller {
     // l.debug(req.params.phoneNum);
     // l.debug(req.phoneNum);
     // check if account already created
-    const p = AccountService.accountExist(req.params.phoneNum)
-      .then(isAccountExist => {
-        if (isAccountExist && !req.query.disablePasswordLogin) {
+    const p = AccountService.findOnePromise('phone_num', req.params.phoneNum)
+      .then(user => {
+        console.log('user: ', user);
+        if (user && user.password && !req.query.disablePasswordLogin) {
           res.status(200).json({ message: 'Account already exist and account can use password to login' });
           p.cancel();
         } else {
@@ -205,6 +207,77 @@ export class Controller {
         }
       }).then(u => {
         res.status(201).json(generateAccountResponse(u));
+      }).catch(jwt.TokenExpiredError, () => {
+        res.boom.unauthorized('TokenExpiredError: JWT token expired');
+      }).catch(jwt.JsonWebTokenError, err => {
+        res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
+      }).catch(err => {
+        l.error(err);
+        res.boom.badImplementation(err.message);
+      });
+  }
+
+  addPhoto(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
+
+    JwtService.verifyToken(req.headers.token)
+      .then(decoded => User.findById(decoded.accountId))
+      .then(user => {
+        if (!user) {
+          throw new UserNotFoundError();
+        }
+
+        for (let i = 0; i < user.picture_url.length; i++) {
+          if (user.picture_url[i] === req.body.pictureUrl) {
+            return user;
+          }
+        }
+
+        user.picture_url.push(req.body.pictureUrl);
+        return user.save();
+      }).then(u => {
+        res.status(200).json({ pictureUrl: u.picture_url });
+      }).catch(jwt.TokenExpiredError, () => {
+        res.boom.unauthorized('TokenExpiredError: JWT token expired');
+      }).catch(jwt.JsonWebTokenError, err => {
+        res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
+      }).catch(err => {
+        l.error(err);
+        res.boom.badImplementation(err.message);
+      });
+  }
+
+  removePhoto(req, res) {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
+
+    JwtService.verifyToken(req.headers.token)
+      .then(decoded => User.findById(decoded.accountId))
+      .then(user => {
+        if (!user) {
+          throw new UserNotFoundError();
+        }
+
+        for (let i = 0; i < user.picture_url.length; i++) {
+          if (user.picture_url[i] === req.body.pictureUrl) {
+            user.picture_url.splice(i, i + 1);
+          }
+        }
+        return user.save();
+      }).then(u => {
+        res.status(200).json({ pictureUrl: u.picture_url });
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
@@ -344,7 +417,6 @@ export class Controller {
   }
 
   list(req, res) {
-
     User.find({}).populate('sign').exec((err, users) => {
       // console.log(users);
       const responseArray = [];
@@ -354,16 +426,6 @@ export class Controller {
 
       res.status(200).json(responseArray);
     });
-
-    // User.find({}, (err, users) => {
-    //   console.log(users);
-    //   const responseArray = [];
-    //   for (let i = 0; i < users.length; i++) {
-    //     responseArray.push(generateAccountResponse(users[i]));
-    //   }
-    //
-    //   res.status(200).json(responseArray);
-    // });
   }
 
   generatePutPreSignedURL(req, res) {
