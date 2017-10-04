@@ -57,7 +57,6 @@ function generateAccountResponse(user) {
         const pictureMediumUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/reduced${
           pictureUrl.substring(pictureUrl.lastIndexOf('/'))}`;
 
-        console.log('pictureThumbnailUrl: ', pictureThumbnailUrl);
         pictureThumbnailUrlArray.push(pictureThumbnailUrl);
         pictureUrlArray.push(pictureMediumUrl);
       }
@@ -256,7 +255,6 @@ export class Controller {
   }
 
   removePhoto(req, res) {
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log(errors.mapped());
@@ -417,14 +415,30 @@ export class Controller {
   }
 
   list(req, res) {
-    User.find({}).populate('sign').exec((err, users) => {
-      // console.log(users);
-      const responseArray = [];
-      for (let i = 0; i < users.length; i++) {
-        responseArray.push(generateAccountResponse(users[i]));
+    console.log(parseInt(req.query.page, 1));
+
+    let page = 1;
+    let limit = 10;
+
+    if (req.query.page && isNaN(req.query.page)) page = parseInt(req.query.page, 10)
+    if (req.query.limit && isNaN(req.query.limit)) limit = parseInt(req.query.limit, 10)
+
+    User.paginate({}, { page, limit, populate: 'sign' }, (err, result) => {
+      if (err) {
+        return res.status(200).json(err);
       }
 
-      res.status(200).json(responseArray);
+      const responseArray = [];
+      for (let i = 0; i < result.docs.length; i++) {
+        responseArray.push(generateAccountResponse(result.docs[i]));
+      }
+      const results = {
+        list: responseArray,
+        totalPages: result.total,
+        limit: result.limit,
+        page: result.page,
+      };
+      res.status(200).json(results);
     });
   }
 

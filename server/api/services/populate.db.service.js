@@ -73,10 +73,12 @@ module.exports.populate = () => {
     signs.push(new Sign(signInfoArray[i]).save());
   }
 
-  Promise.all(signs).then(results => {
-    // console.log('results: ', results);
+  Promise.all(signs).catch(err => {
+    if (err.code === 11000 || err.code === 11001) {
+      return Sign.find({});
+    }
+  }).then(results => {
     results.forEach(sign => {
-      // console.log('set signMap: ', sign.sign_id);
       signMap.set(sign.sign_id, sign);
     });
 
@@ -129,7 +131,7 @@ module.exports.populate = () => {
       gender: 'female',
       picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/4/young-beautiful-brunette-woman-PVZ4V7Z.jpg',
         'https://s3.amazonaws.com/ic-dating/profiles/4/young-woman-flexing-muscles-with-dumbbell-in-gym-PCWR2LF.jpg'],
-      sign: [signMap.get(10), signMap.get(11), signMap.get(12)],
+      sign: [signMap.get(10), signMap.get(11), signMap.get(12), signMap.get(2), signMap.get(1)],
     }).save();
 
     new User({
@@ -146,9 +148,26 @@ module.exports.populate = () => {
         'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-leaning-against-art-sculpture-PVSFSJY.jpg'],
       sign: [signMap.get(5), signMap.get(9), signMap.get(2)],
     }).save();
-  })
-    .catch(err => {
-      // console.error(err.message);
-    });
+
+    for (let i = 0; i < 21; i++) {
+      new User({
+        phone_num: `+5111111110${i.toString()}`,
+        password: '',
+        display_name: `Heather${i.toString()}`,
+        ethnicity: 'caucasian',
+        date_of_birth: '1991-02-02',
+        gender: 'female',
+        picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/5/happy-beautiful-young-woman-standing-and-talking-PNGKKME.jpg',
+          'https://s3.amazonaws.com/ic-dating/profiles/5/sensual-attractive-young-woman-with-red-lips-PA4LCMB.jpg',
+          'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-cutting-vegetables-PKTD234.jpg',
+          'https://s3.amazonaws.com/icdating/profiles/5/young-woman-exercising-in-the-rain-PCNHPT8.jpg',
+          'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-leaning-against-art-sculpture-PVSFSJY.jpg'],
+        sign: [signMap.get((i % 12) + 1),
+          signMap.get(((i + 2) % 12) + 1),
+          signMap.get(((i + 1) % 12) + 1),
+          signMap.get(((i + 3) % 12) + 1)],
+      }).save();
+    }
+  });
 };
 

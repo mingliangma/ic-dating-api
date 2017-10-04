@@ -362,7 +362,7 @@ paths:
         type: integer
       - name: ethnicity
         in: query
-        description: Asian, black, latin, indian, nativeamerican, caucasian, other
+        description: Asian, black, latin, indian, native_american, caucasian, other
         required: false
         type: string
       - name: sign
@@ -370,18 +370,34 @@ paths:
         description: sign id with - as seperator. ex 1-2-3-4-5
         required: false
         type: string
+      - name: page
+        in: query
+        description: The response page in the account list
+        required: false
+        type: number
+      - name: limit
+        in: query
+        description: The number of items to return
+        required: false
+        type: number
       responses:
         '200':
           description: successful operation
           schema:
             type: object
             properties:
-              pictureUrl:
+              totalPages:
+                type: number
+              limit:
+                type: number
+              page:
+                type: number
+              list:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/definitions/AccountVM'
         400:
-          description: Invalid username supplied
+          description: Invalid accountId supplied
         404:
           description: User not found
   /sign:
