@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema({
   date_of_birth: Date,
   gender: String,
   picture_url: [String],
+  created_at: Date,
+  updated_at: Date,
   sign: [{ type: Schema.Types.ObjectId, ref: 'Sign' }],
   hiding: [{ type: Schema.Types.ObjectId, ref: 'Hide' }],
 });

@@ -35,14 +35,15 @@ const validateSignId = check('signId', 'signId field must be an array of integer
 export default express
   .Router()
   .get('/me', controller.me)
-  .post('/verify/phone/:phoneNum', [validatePhoneNum], controller.verifyPhone)
+  .post('/verify/phone/:phoneNum', controller.verifyPhone)
   .post('/verify/phone/:phoneNum/code/:code', controller.verifyCode)
   .put('/', [validateDateOfBirth, validateGender, validateEthnicity], controller.initAccount)
-  .post('/login', [validatePhoneNum], controller.login)
+  .post('/login', controller.login)
   .get('/list', controller.list)
   .get('/:accountId', [validateAccountId], controller.getAccountInfo)
   .put('/:accountId', [validateAccountId], controller.updateAccount)
   .get('/:accountId/image/gen-presigned-url', controller.generatePutPreSignedURL)
   .put('/:accountId/image', [validateUrl], controller.addPhoto)
-  .delete('/:accountId/image', [validateUrl], controller.removePhoto);
+  .delete('/:accountId/image', [validateUrl], controller.removePhoto)
+  .post('/hide/initiator/:initiatorAccountId/receiver/:receiverAccountId', controller.hideUser);
 

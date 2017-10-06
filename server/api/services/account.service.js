@@ -78,8 +78,22 @@ class AccountService {
     });
   }
 
+  findPromise(query) {
+    console.log('query: ', query);
+    return new Promise((resolve, reject) => {
+      User.find(query, (err, users) => {
+        if (users) {
+          resolve(users);
+        } else if (err) {
+          reject(err);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
   findOneAndPopulate(fieldName, value, populateField) {
-    console.info({ [fieldName]: value });
     return new Promise((resolve, reject) => {
       User.findOne({ [fieldName]: value })
         .populate(populateField)

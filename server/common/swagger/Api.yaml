@@ -339,7 +339,7 @@ paths:
   /account/list:
     get:
       tags:
-      - search
+      - discovery
       summary: Get account info by account ID
       operationId: search
       produces:
@@ -347,15 +347,15 @@ paths:
       parameters:
       - name: gender
         in: query
-        description: men, women, or both
+        description: male, female, or both
         required: false
         type: string
-      - name: agemin
+      - name: ageMin
         in: query
         description: 18-99
         required: false
         type: integer
-      - name: agemax
+      - name: ageMax
         in: query
         description: 18-99
         required: false
@@ -400,6 +400,101 @@ paths:
           description: Invalid accountId supplied
         404:
           description: User not found
+
+  /discovery/myAccountId/{myAccountId}:
+    get:
+      tags:
+      - discovery
+      summary: Get account info by account ID
+      operationId: search
+      produces:
+        - application/json
+      parameters:
+      - name: myAccountId
+        in: path
+        description: my account Id
+        required: true
+        type: string
+      - name: gender
+        in: query
+        description: male, female, or both
+        required: false
+        type: string
+      - name: ageMin
+        in: query
+        description: 18-99
+        required: false
+        type: integer
+      - name: ageMax
+        in: query
+        description: 18-99
+        required: false
+        type: integer
+      - name: ethnicity
+        in: query
+        description: Asian, black, latin, indian, native_american, caucasian, other
+        required: false
+        type: string
+      - name: sign
+        in: query
+        description: sign id with - as seperator. ex 1-2-3-4-5
+        required: false
+        type: string
+      - name: page
+        in: query
+        description: The response page in the account list
+        required: false
+        type: number
+      - name: limit
+        in: query
+        description: The number of items to return
+        required: false
+        type: number
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              totalPages:
+                type: number
+              limit:
+                type: number
+              page:
+                type: number
+              list:
+                type: array
+                items:
+                  $ref: '#/definitions/AccountVM'
+        400:
+          description: Invalid accountId supplied
+        404:
+          description: User not found
+
+  /account/hide/initiator/{initiatorAccountId}/receiver/{receiverAccountId}:
+    post:
+      tags:
+        - discovery
+      summary: Hide the receiver from the initiator.
+      operationId: hideUser
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+      - name: initiatorAccountId
+        in: path
+        description: The user who perform the action of hiding someone in their discovery list
+        required: true
+        type: string
+      - name: receiverAccountId
+        in: path
+        description: The user who received the hiding action and being hidden from the initiator
+        required: true
+        type: string
+      responses:
+        '201':
+          description: successful operation
   /sign:
     get:
       tags:

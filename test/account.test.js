@@ -14,7 +14,7 @@ const expect = chai.expect;
 describe('User', () => {
   beforeEach(done => { // Before each test we empty the database
     User.remove({}, err => {
-      console.log('err: ', err);
+      console.error('err: ', err);
       done();
     });
   });
@@ -27,7 +27,12 @@ describe('User', () => {
         .get('/api/v1/account/list')
         .end((err, res) => {
           expect(res.statusCode).to.equal(200);
-          expect(res.body).to.be.a('array');
+          expect(res.body).to.be.a('object');
+          expect(res.body).to.have.property('list');
+          expect(res.body).to.have.property('totalPages');
+          expect(res.body).to.have.property('totalItems');
+          expect(res.body).to.have.property('limit');
+          expect(res.body).to.have.property('page');
           done();
         });
     });

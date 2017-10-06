@@ -8,5 +8,4 @@ module.exports = mongoose.model('Hide', new Schema({
   initiator: { type: Schema.Types.ObjectId, ref: 'User' }, // the user who initiates the hide action
   receiver: { type: Schema.Types.ObjectId, ref: 'User' }, // //the user who receives the hide action
   created_at: Date,
-  updated_at: Date,
 }));

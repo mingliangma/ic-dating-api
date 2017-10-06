@@ -4,15 +4,18 @@ import SmsService from '../../services/sms.service';
 import OtpService from '../../services/otp.service';
 import JwtService from '../../services/jwt.service';
 import AwsService from '../../services/aws.service';
+import ResponseService from '../../services/response.service';
 import PasswordService from '../../services/password.service';
 import l from '../../../common/logger';
 import User from '../../../model/user';
 import Sign from '../../../model/sign';
+import Hide from '../../../model/hide';
 // get our mongoose model
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const Promise = require('bluebird');
-const dateFormat = require('dateformat');
+
+const moment = require('moment');
 const { validationResult } = require('express-validator/check');
 
 Promise.config({
@@ -32,50 +35,50 @@ class SignNotFoundError extends Error {
   }
 }
 
-function generateAccountResponse(user) {
-  let response = {};
-  const signResponse = [];
-  if (user) {
-    if (user.sign.length > 0) {
-      for (let i = 0; i < user.sign.length; i++) {
-        // console.info(user.sign[0]);
-        signResponse.push({
-          signId: user.sign[i].sign_id,
-          signName: user.sign[i].sign_name,
-          signIconUrl: user.sign[i].sign_icon_url,
-        });
+function generateListQuery(reqQuery) {
+  return new Promise((resolve, reject) => {
+    const query = {};
+    query.display_name = { $exists: true };
+    query.picture_url = { $exists: true };
+    query.$where = 'this.picture_url.length>0';
+    if (reqQuery.gender) query.gender = reqQuery.gender;
+    if (reqQuery.ethnicity) query.ethnicity = reqQuery.ethnicity;
+    if (reqQuery.ageMax || reqQuery.ageMin) {
+      const dateQuery = { };
+
+      if (reqQuery.ageMax) {
+        const dateString = moment().subtract(reqQuery.ageMax, 'years');
+        dateQuery.$gte = dateString.toDate();
       }
-    }
 
-    const pictureThumbnailUrlArray = [];
-    const pictureUrlArray = [];
-    if (user.picture_url.length > 0) {
-      for (let i = 0; i < user.picture_url.length; i++) {
-        const pictureUrl = user.picture_url[i];
-        const pictureThumbnailUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/resized/cropped-to-square${
-          pictureUrl.substring(pictureUrl.lastIndexOf('/'))}`;
-        const pictureMediumUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/reduced${
-          pictureUrl.substring(pictureUrl.lastIndexOf('/'))}`;
-
-        pictureThumbnailUrlArray.push(pictureThumbnailUrl);
-        pictureUrlArray.push(pictureMediumUrl);
+      if (reqQuery.ageMin) {
+        const dateString = moment().subtract(reqQuery.ageMin, 'years');
+        dateQuery.$lte = dateString.toDate();
       }
-    }
 
-    response = {
-      accountId: user._id.toString(),
-      displayName: user.display_name,
-      ethnicity: user.ethnicity,
-      dateOfBirth: dateFormat(user.date_of_birth, 'yyyy-mm-dd'),
-      gender: user.gender,
-      phoneNum: user.phone_num,
-      pictureUrl: pictureUrlArray,
-      pictureThumbnailUrl: pictureThumbnailUrlArray,
-      description: user.description,
-      signId: signResponse,
-    };
-  }
-  return response;
+      query.date_of_birth = dateQuery;
+    } else {
+      // should always return user with age over 18
+      const dateQuery = {};
+      dateQuery.$lte = moment().subtract(18, 'years').toDate();
+      query.date_of_birth = dateQuery;
+    }
+    if (reqQuery.sign) {
+      const signArray = reqQuery.sign.split('-');
+      Sign.find({ sign_id: { $in: signArray } }, '_id', (err, signs) => {
+        if (err) {
+          reject(err);
+        }
+
+        for (let i = 0; i < signs.length; i++) {
+          query.sign = { $in: signs };
+        }
+        resolve(query);
+      });
+    } else {
+      resolve(query);
+    }
+  });
 }
 
 export class Controller {
@@ -91,7 +94,7 @@ export class Controller {
         if (!u) {
           throw new UserNotFoundError('User not found');
         } else {
-          res.status(200).json(generateAccountResponse(u));
+          res.status(200).json(ResponseService.generateAccountResponse(u));
         }
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
@@ -104,9 +107,11 @@ export class Controller {
   }
 
   verifyPhone(req, res) {
-    //
-    // l.debug(req.params.phoneNum);
-    // l.debug(req.phoneNum);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
     // check if account already created
     const p = AccountService.findOnePromise('phone_num', req.params.phoneNum)
       .then(user => {
@@ -144,6 +149,12 @@ export class Controller {
   }
 
   verifyCode(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.mapped());
+      return res.status(422).json({ errors: errors.mapped() });
+    }
+
     const phoneNum = req.params.phoneNum;
     const code = req.params.code;
 
@@ -202,10 +213,11 @@ export class Controller {
           if (req.body.ethnicity) u.ethnicity = req.body.ethnicity;
           if (req.body.dateOfBirth) u.date_of_birth = req.body.dateOfBirth;
           if (req.body.gender) u.gender = req.body.gender;
+          u.created_at = moment().toDate();
           return u.save();
         }
       }).then(u => {
-        res.status(201).json(generateAccountResponse(u));
+        res.status(201).json(ResponseService.generateAccountResponse(u));
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
@@ -238,8 +250,11 @@ export class Controller {
           }
         }
 
-        user.picture_url.push(req.body.pictureUrl);
-        return user.save();
+        const u = user;
+        u.picture_url.push(req.body.pictureUrl);
+        u.updated_at = moment().toDate();
+
+        return u.save();
       }).then(u => {
         res.status(200).json({ pictureUrl: u.picture_url });
       }).catch(jwt.TokenExpiredError, () => {
@@ -263,14 +278,16 @@ export class Controller {
 
     JwtService.verifyToken(req.headers.token)
       .then(decoded => User.findById(decoded.accountId))
-      .then(user => {
-        if (!user) {
+      .then(u => {
+        if (!u) {
           throw new UserNotFoundError();
         }
 
+        const user = u;
         for (let i = 0; i < user.picture_url.length; i++) {
           if (user.picture_url[i] === req.body.pictureUrl) {
-            user.picture_url.splice(i, i + 1);
+            user.picture_url.splice(i, 1);
+            user.updated_at = moment().toDate();
           }
         }
         return user.save();
@@ -328,6 +345,7 @@ export class Controller {
           if (req.body.description) u.description = req.body.description;
           if (req.body.signId) u.sign = signArray;
           if (req.body.pictureUrl) u.picture_url = req.body.pictureUrl;
+          u.updated_at = moment().toDate();
           return u.save();
         }
 
@@ -337,6 +355,7 @@ export class Controller {
           const u = result;
           if (req.body.description) u.description = req.body.description;
           if (req.body.pictureUrl) u.picture_url = req.body.pictureUrl;
+          u.updated_at = moment().toDate();
           return u.save();
         }
       }).then(u => {
@@ -415,31 +434,41 @@ export class Controller {
   }
 
   list(req, res) {
-    console.log(parseInt(req.query.page, 1));
+    // console.log(req.query);
 
-    let page = 1;
-    let limit = 10;
+    const options = { page: 1, limit: 30, populate: 'sign' };
 
-    if (req.query.page && isNaN(req.query.page)) page = parseInt(req.query.page, 10)
-    if (req.query.limit && isNaN(req.query.limit)) limit = parseInt(req.query.limit, 10)
+    if (req.query.page && !isNaN(req.query.page)) options.page = parseInt(req.query.page, 10);
+    if (req.query.limit && !isNaN(req.query.limit)) options.limit = parseInt(req.query.limit, 10);
 
-    User.paginate({}, { page, limit, populate: 'sign' }, (err, result) => {
-      if (err) {
-        return res.status(200).json(err);
-      }
+    generateListQuery(req.query)
+      .then(query => {
+        // console.log('query: ', query);
+        // console.log('options: ', options);
+        User.paginate(query, options, (err, result) => {
+          if (err) {
+            return res.status(200).json(err);
+          }
 
-      const responseArray = [];
-      for (let i = 0; i < result.docs.length; i++) {
-        responseArray.push(generateAccountResponse(result.docs[i]));
-      }
-      const results = {
-        list: responseArray,
-        totalPages: result.total,
-        limit: result.limit,
-        page: result.page,
-      };
-      res.status(200).json(results);
-    });
+          const responseArray = [];
+          for (let i = 0; i < result.docs.length; i++) {
+            responseArray.push(ResponseService.generateAccountResponse(result.docs[i]));
+          }
+
+          const results = {
+            list: responseArray,
+            totalPages: Math.ceil(result.total / result.limit),
+            totalItems: result.total,
+            limit: result.limit,
+            page: result.page,
+          };
+          res.status(200).json(results);
+        });
+      })
+      .catch(err => {
+        console.error('error:', err.message);
+        res.boom.badimplementation(err.message);
+      });
   }
 
   generatePutPreSignedURL(req, res) {
@@ -463,6 +492,38 @@ export class Controller {
       .catch(err => {
         console.error('error:', err.message);
         res.boom.badimplementation(err.message);
+      });
+  }
+
+  // receiverAccountId hide from initiatorAccountId
+  hideUser(req, res) {
+    const initiatorAccountId = req.params.initiatorAccountId;
+    const receiverAccountId = req.params.receiverAccountId;
+
+    console.log('initiatorAccountId is valid: ', mongoose.Types.ObjectId.isValid(initiatorAccountId));
+    console.log('receiverAccountId is valid: ', mongoose.Types.ObjectId.isValid(receiverAccountId));
+
+    // check if initiatorAccountId and receiverAccountId exist
+    AccountService.findPromise({ _id: { $in: [
+      mongoose.Types.ObjectId(initiatorAccountId),
+      mongoose.Types.ObjectId(receiverAccountId),
+    ] } })
+      .then(users => {
+        if (users && users.length === 2) {
+          const nowDate = moment().toDate();
+          return new Hide({
+            initiator: users[0],
+            receiver: users[1],
+            created_at: nowDate,
+          }).save((err, hide) => {
+            console.log('err: ', err);
+            console.log('hide: ', hide);
+          });
+        }
+      }).then(hide => {
+        res.status(201).json({ success: true });
+      }).catch(err => {
+        res.status(400).json(err);
       });
   }
 }
