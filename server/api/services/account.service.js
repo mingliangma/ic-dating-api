@@ -34,6 +34,10 @@ class AccountService {
       // create a user
       const u = new User({
         phone_num: phoneNum,
+        geometry: {
+          type: 'Point',
+          coordinates: [0, 0],
+        },
       });
 
       // save the user

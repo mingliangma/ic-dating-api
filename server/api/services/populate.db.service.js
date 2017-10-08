@@ -5,6 +5,7 @@ import PasswordService from './password.service';
 const moment = require('moment');
 const random_name = require('node-random-name');
 const Promise = require('bluebird');
+const geolib = require('geolib');
 
 const ethnicity = ['asian', 'black', 'latin', 'indian', 'native_american', 'caucasian', 'other'];
 const gender = ['male', 'female'];
@@ -110,8 +111,18 @@ function populatePresetUsers(users, signMap) {
       'https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-in-sunglasses-PHZVNKU.jpg',
       'https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-looking-at-the-sky-PY8W2BD.jpg'],
     sign: [signMap.get(1), signMap.get(2), signMap.get(3)],
+    geometry: {
+      type: 'Point',
+      coordinates: [-79.4141207, 43.7659095],
+    },
   }).save());
 
+  // 0.98 KM away from Cindy
+  console.log(`Janice is ${
+    geolib.getDistance(
+      { latitude: 43.7659095, longitude: -79.4141207 },
+      { latitude: 43.7746177, longitude: -79.4163523 })
+  }m away from Cindy`);
 
   users.push(new User({
     phone_num: '+16471112223',
@@ -126,13 +137,23 @@ function populatePresetUsers(users, signMap) {
     picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-PGKY5V2.jpg',
       'https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-using-smart-phone-and-listening-PRR5KSY.jpg'],
     sign: [signMap.get(4), signMap.get(5), signMap.get(6)],
+    geometry: {
+      type: 'Point',
+      coordinates: [-79.4163523, 43.7746177],
+    },
   }).save());
 
+  // 7.81 KM away from Cindy
+  console.log(`Ashley is ${
+    geolib.getDistance(
+      { latitude: 43.7659095, longitude: -79.4141207 },
+      { latitude: 43.7409218, longitude: -79.5048262 })
+  }m away from Cindy`);
   users.push(new User({
     phone_num: '+16471112224',
     password: PasswordService.cryptPasswordSync('55555555'),
     display_name: 'Ashley',
-    ethnicity: 'caucasian',
+    ethnicity: 'latin',
     date_of_birth: '1987-02-02',
     gender: 'female',
     created_at: moment().toDate(),
@@ -143,13 +164,18 @@ function populatePresetUsers(users, signMap) {
       'https://s3.amazonaws.com/ic-dating/profiles/3/beauty-woman-at-the-seaside-PPJC9TA.jpg',
       'https://s3.amazonaws.com/ic-dating/profiles/3/beauty-woman-at-the-seaside-PQUDJC6.jpg'],
     sign: [signMap.get(7), signMap.get(8), signMap.get(9)],
+    geometry: {
+      type: 'Point',
+      coordinates: [-79.5048262, 43.7409218],
+    },
   }).save());
 
+  // 77.42 KM away from Cindy
   users.push(new User({
     phone_num: '+16471112225',
     password: PasswordService.cryptPasswordSync('55555555'),
     display_name: 'Allie',
-    ethnicity: 'caucasian',
+    ethnicity: 'other',
     date_of_birth: '1997-02-02',
     gender: 'female',
     created_at: moment().toDate(),
@@ -158,13 +184,18 @@ function populatePresetUsers(users, signMap) {
     picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/4/young-beautiful-brunette-woman-PVZ4V7Z.jpg',
       'https://s3.amazonaws.com/ic-dating/profiles/4/young-woman-flexing-muscles-with-dumbbell-in-gym-PCWR2LF.jpg'],
     sign: [signMap.get(10), signMap.get(11), signMap.get(12), signMap.get(2), signMap.get(1)],
+    geometry: {
+      type: 'Point',
+      coordinates: [-80.0735749, 43.2607245],
+    },
   }).save());
 
+  // 35.55 KM away from Cindy
   users.push(new User({
     phone_num: '+16471112226',
     password: PasswordService.cryptPasswordSync('55555555'),
     display_name: 'Heather',
-    ethnicity: 'caucasian',
+    ethnicity: 'asian',
     date_of_birth: '1991-02-02',
     gender: 'female',
     created_at: moment().toDate(),
@@ -175,6 +206,10 @@ function populatePresetUsers(users, signMap) {
       'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-exercising-in-the-rain-PCNHPT8.jpg',
       'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-leaning-against-art-sculpture-PVSFSJY.jpg'],
     sign: [signMap.get(5), signMap.get(9), signMap.get(2)],
+    geometry: {
+      type: 'Point',
+      coordinates: [-79.7652711, 43.5724501],
+    },
   }).save());
 }
 
@@ -200,6 +235,10 @@ function populateFemaleUsers(users, signMap) {
         signMap.get(((i + 2) % 12) + 1),
         signMap.get(((i + 1) % 12) + 1),
         signMap.get(((i + 3) % 12) + 1)],
+      geometry: {
+        type: 'Point',
+        coordinates: [-79.4163523, 43.7746177],
+      },
     }).save());
   }
 }
@@ -226,6 +265,10 @@ function populateXNumUsers(users, signMap) {
         signMap.get(((i + 2) % 12) + 1),
         signMap.get(((i + 1) % 12) + 1),
         signMap.get(((i + 3) % 12) + 1)],
+      geometry: {
+        type: 'Point',
+        coordinates: [-79.4163523, 43.7746177],
+      },
     }).save());
   }
 }
@@ -252,6 +295,10 @@ function populateMaleUsers(users, signMap) {
         signMap.get(((i + 2) % 12) + 1),
         signMap.get(((i + 1) % 12) + 1),
         signMap.get(((i + 3) % 12) + 1)],
+      geometry: {
+        type: 'Point',
+        coordinates: [-79.4163523, 43.7746177],
+      },
     }).save());
   }
 }
@@ -280,7 +327,7 @@ function populate() {
 
     const users = [];
     populatePresetUsers(users, signMap);
-    // populateXNumUsers(users, signMap);
+    // // populateXNumUsers(users, signMap);
     populateFemaleUsers(users, signMap);
     populateMaleUsers(users, signMap);
 

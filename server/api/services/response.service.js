@@ -1,6 +1,9 @@
 const Promise = require('bluebird');
 const moment = require('moment');
-module.exports.generateAccountResponse = user => {
+const geolib = require('geolib');
+
+module.exports.generateAccountResponse = (user, reqQuery) => {
+  // console.log('reqQuery: ', reqQuery);
   let response = {};
   const signResponse = [];
   if (user) {
@@ -29,12 +32,11 @@ module.exports.generateAccountResponse = user => {
         pictureUrlArray.push(pictureMediumUrl);
       }
     }
-
     response = {
       accountId: user._id.toString(),
       displayName: user.display_name,
       ethnicity: user.ethnicity,
-      dateOfBirth: moment(user.date_of_birth).format('YYYY-MM-DD'),
+      dateOfBirth: moment.utc(user.date_of_birth).format('YYYY-MM-DD'),
       gender: user.gender,
       phoneNum: user.phone_num,
       pictureUrl: pictureUrlArray,
@@ -42,6 +44,12 @@ module.exports.generateAccountResponse = user => {
       description: user.description,
       signId: signResponse,
     };
+
+    if (reqQuery && reqQuery.latitude && reqQuery.longitude) {
+      response.distance = geolib.getDistance(
+        { latitude: Number(reqQuery.latitude), longitude: Number(reqQuery.longitude) },
+        { longitude: user.geometry.coordinates[0], latitude: user.geometry.coordinates[1] });
+    }
   }
   return response;
 };

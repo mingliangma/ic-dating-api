@@ -1,6 +1,6 @@
 // get an instance of mongoose and mongoose.Schema
 const mongoose = require('mongoose');
-var mongoosePaginate = require('mongoose-paginate');
+const mongoosePaginate = require('mongoose-paginate');
 
 const Schema = mongoose.Schema;
 const userSchema = new mongoose.Schema({
@@ -15,10 +15,17 @@ const userSchema = new mongoose.Schema({
   picture_url: [String],
   created_at: Date,
   updated_at: Date,
+  geometry: {
+    type: { type: String },
+    coordinates: [Number],
+  },
+  // location: { type: [Number], index: '2d' },
   sign: [{ type: Schema.Types.ObjectId, ref: 'Sign' }],
   hiding: [{ type: Schema.Types.ObjectId, ref: 'Hide' }],
 });
-
+userSchema.index({
+  geometry: '2dsphere',
+});
 userSchema.plugin(mongoosePaginate);
 
 // set up a mongoose model and pass it using module.exports

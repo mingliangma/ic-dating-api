@@ -66,9 +66,18 @@ paths:
         '200':
           description: Account already exist and account can use password to login
         '201':
-          description: >-
+          description:
             Verification code sent, and record created, regardless whether user
             has sent the reuqest before
+          schema:
+            type: object
+            properties:
+              codeForTesting:
+                type: string
+              message:
+                type: string
+              success:
+                type: boolean
         '400':
           description: Invalid Request
         '500':
@@ -97,9 +106,16 @@ paths:
           type: string
       responses:
         '200':
-          description: Successfully verfied
+          description: Successfully verfied, an empty account is created, token is generated
           schema:
-            $ref: '#/definitions/Token'
+            type: object
+            properties:
+              token:
+                type: string
+              userId:
+                type: string
+              success:
+                type: boolean
         '400':
           description: 'Invalid Request, or wrong verification code'
         '401':
@@ -133,10 +149,9 @@ paths:
       responses:
         '201':
           description: >-
-            Successfully created account, a response token is generated for
-            accessing APIs
+            Successfully initialized the account
           schema:
-            $ref: '#/definitions/Token'
+            $ref: '#/definitions/AccountVM'
   /account/login:
     post:
       tags:
@@ -340,7 +355,7 @@ paths:
     get:
       tags:
       - discovery
-      summary: Get account info by account ID
+      summary:
       operationId: search
       produces:
         - application/json
@@ -405,7 +420,7 @@ paths:
     get:
       tags:
       - discovery
-      summary: Get account info by account ID
+      summary: Discovery users
       operationId: search
       produces:
         - application/json
@@ -415,6 +430,21 @@ paths:
         description: my account Id
         required: true
         type: string
+      - name: latitude
+        in: query
+        description: The user's latitude. eg. 43.7659095
+        required: true
+        type: number
+      - name: longitude
+        in: query
+        description: The user's longitude. eg. -79.4141207
+        required: true
+        type: number
+      - name: maxDistance
+        in: query
+        description: max distance in meter. default value is 2000m
+        required: false
+        type: number
       - name: gender
         in: query
         description: male, female, or both
@@ -450,6 +480,7 @@ paths:
         description: The number of items to return
         required: false
         type: number
+
       responses:
         '200':
           description: successful operation
@@ -471,7 +502,7 @@ paths:
         404:
           description: User not found
 
-  /account/hide/initiator/{initiatorAccountId}/receiver/{receiverAccountId}:
+  /discovery/hide/initiator/{initiatorAccountId}/receiver/{receiverAccountId}:
     post:
       tags:
         - discovery

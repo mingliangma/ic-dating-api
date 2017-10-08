@@ -107,6 +107,7 @@ export class Controller {
   }
 
   verifyPhone(req, res) {
+    console.log('verifyPhone:: req.query', req.query);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log(errors.mapped());
@@ -129,6 +130,7 @@ export class Controller {
         l.debug(`IC Code: ${token}`);
         if (req.query.disableSMS) {
           l.debug('SMS service is disabled');
+          console.log('SMS service is disabled');
           res.status(201).json({ codeForTesting: token, success: true });
           p.cancel();
         }
@@ -170,7 +172,7 @@ export class Controller {
     const p = AccountService.createAccount(phoneNum)
       .then(user => {
         // generate web token
-        console.log('generateToken1');
+        // console.log('generateToken1');
         const token = JwtService.generateToken(phoneNum, user._id);
         res.status(201).json({ success: true, token, userId: user._id });
         p.cancel();
@@ -426,7 +428,7 @@ export class Controller {
     Promise.all([findOne, comparePassword]).then(([user, compareResult]) => {
       if (compareResult) {
         const token = JwtService.generateToken(req.body.phoneNum, user._id);
-        res.status(201).json({ success: true, token, userId: user._id });
+        res.status(201).json({ success: true, token, userId: user._id, accountId: user._id });
       } else {
         res.boom.unauthorized('incorrect password');
       }
@@ -443,7 +445,7 @@ export class Controller {
 
     generateListQuery(req.query)
       .then(query => {
-        // console.log('query: ', query);
+        console.log('query: ', query);
         // console.log('options: ', options);
         User.paginate(query, options, (err, result) => {
           if (err) {

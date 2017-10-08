@@ -9,11 +9,23 @@ const moment = require('moment');
 const mongoose = require('mongoose');
 
 function generateListQuery(reqQuery, myAccountId, hides) {
+  // console.log('reqQuery: ',reqQuery);
   return new Promise((resolve, reject) => {
     const query = {};
     query.display_name = { $exists: true };
     query.picture_url = { $exists: true };
     query.$where = 'this.picture_url.length>0';
+    const maxDistance = reqQuery.maxDistance || 2000;
+    query.geometry = {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [reqQuery.longitude, reqQuery.latitude],
+        },
+        $maxDistance: maxDistance,
+        $minDistance: 0,
+      },
+    };
 
     if (reqQuery.gender) query.gender = reqQuery.gender;
     if (reqQuery.ethnicity) query.ethnicity = reqQuery.ethnicity;
@@ -21,7 +33,7 @@ function generateListQuery(reqQuery, myAccountId, hides) {
       const dateQuery = { };
 
       if (reqQuery.ageMax) {
-        const dateString = moment().subtract(reqQuery.ageMax, 'years');
+        const dateString = moment().subtract(reqQuery.ageMax + 1, 'years');
         dateQuery.$gte = dateString.toDate();
       }
 
@@ -79,10 +91,34 @@ function findHide(query) {
 
 export class Controller {
   hideUser(req, res) {
-    const initiatorAccountId = req.body.initiatorAccountId;
-    const receiverAccountId = req.body.receiverAccountId;
+    const initiatorAccountId = req.params.initiatorAccountId;
+    const receiverAccountId = req.params.receiverAccountId;
+
+    console.log('initiatorAccountId is valid: ', mongoose.Types.ObjectId.isValid(initiatorAccountId));
+    console.log('receiverAccountId is valid: ', mongoose.Types.ObjectId.isValid(receiverAccountId));
 
     // check if initiatorAccountId and receiverAccountId exist
+    AccountService.findPromise({ _id: { $in: [
+      mongoose.Types.ObjectId(initiatorAccountId),
+      mongoose.Types.ObjectId(receiverAccountId),
+    ] } })
+      .then(users => {
+        if (users && users.length === 2) {
+          const nowDate = moment().toDate();
+          return new Hide({
+            initiator: users[0],
+            receiver: users[1],
+            created_at: nowDate,
+          }).save((err, hide) => {
+            console.log('err: ', err);
+            console.log('hide: ', hide);
+          });
+        }
+      }).then(hide => {
+        res.status(201).json({ success: true });
+      }).catch(err => {
+        res.status(400).json(err);
+      });
   }
 
   discover(req, res) {
@@ -106,15 +142,15 @@ export class Controller {
           if (err) {
             return res.status(200).json(err);
           }
-
           const responseArray = [];
           for (let i = 0; i < result.docs.length; i++) {
-            responseArray.push(ResponseService.generateAccountResponse(result.docs[i]));
+            responseArray.push(ResponseService.generateAccountResponse(result.docs[i], req.query));
           }
 
           const results = {
             list: responseArray,
-            totalPages: Math.ceil(result.total / result.limit),
+            totalPages: (Math.ceil(result.total / result.limit) === 0) ?
+              1 : Math.ceil(result.total / result.limit),
             totalItems: result.total,
             limit: result.limit,
             page: result.page,
