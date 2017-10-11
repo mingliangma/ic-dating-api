@@ -78,6 +78,7 @@ describe('Sign Up Process', () => {
             .end((err1, res1) => {
               expect(res1.statusCode).to.equal(201);
               expect(res1.body).to.have.property('token');
+              expect(res1.body).to.have.property('accountId');
               done();
             });
         });
@@ -217,7 +218,7 @@ describe('Sign Up Process', () => {
                       expect(res3.statusCode).to.equal(201);
                       expect(res3.body).to.have.property('token');
 
-                      expect(res3.body).to.have.property('userId');
+                      expect(res3.body).to.have.property('accountId');
                       expect(res3.body.accountId).to.equal(res2.body.accountId);
 
                       done();
