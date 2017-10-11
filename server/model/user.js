@@ -17,9 +17,8 @@ const userSchema = new mongoose.Schema({
   updated_at: Date,
   geometry: {
     type: { type: String },
-    coordinates: [Number],
+    coordinates: [Number], // [longitude, latitude]
   },
-  // location: { type: [Number], index: '2d' },
   sign: [{ type: Schema.Types.ObjectId, ref: 'Sign' }],
   hiding: [{ type: Schema.Types.ObjectId, ref: 'Hide' }],
 });

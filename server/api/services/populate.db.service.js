@@ -326,6 +326,8 @@ function populate() {
     });
 
     const users = [];
+
+    console.log('Populate database with sample users...');
     populatePresetUsers(users, signMap);
     // // populateXNumUsers(users, signMap);
     populateFemaleUsers(users, signMap);

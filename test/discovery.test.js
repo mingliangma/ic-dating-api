@@ -15,15 +15,15 @@ const expect = chai.expect;
 
 // Our parent block
 describe('User', () => {
-  // before(done => { // Before each test we empty the database
-  //   User.remove({}, err => {
-  //     if (!err) {
-  //       addUsers().then(users => { done(); });
-  //     } else {
-  //       done();
-  //     }
-  //   });
-  // });
+  before(done => { // Before the tests we empty the database
+    User.remove({}, err => {
+      if (!err) {
+        addUsers().then(users => { done(); });
+      } else {
+        done();
+      }
+    });
+  });
 
   describe('/GET /api/v1/discovery/myAccountId/{myAccountId}', () => {
     it('discover with no filter', done => {
@@ -32,9 +32,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               if (err) console.error(err);
               expect(res.statusCode).to.equal(200);
@@ -80,9 +80,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?gender=female&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?gender=female&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -111,9 +111,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?gender=male&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?gender=male&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -142,9 +142,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?ageMin=23&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?ageMin=23&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -173,9 +173,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?ageMax=23&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?ageMax=23&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -204,9 +204,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?ageMin=23&ageMax=23&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?ageMin=23&ageMax=23&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -235,9 +235,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?ethnicity=caucasian&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?ethnicity=caucasian&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -266,9 +266,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?ethnicity=latin&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?ethnicity=latin&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -297,10 +297,10 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           console.log(res0.body);
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?sign=3&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?sign=3&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -328,9 +328,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?sign=1-12&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?sign=1-12&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -359,9 +359,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?sign=2-3-4-5-6-7-8&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?sign=2-3-4-5-6-7-8&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -389,9 +389,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=1000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=1000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -432,9 +432,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=8000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=8000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -462,9 +462,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');
@@ -516,9 +516,9 @@ describe('User', () => {
         .send({ phoneNum: '+16471112222', password: '55555555' })
         .end((err0, res0) => {
           expect(res0.statusCode).to.equal(201);
-          expect(res0.body).to.have.property('userId');
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .get(`/api/v1/discovery/myAccountId/${res0.body.userId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=800`)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?latitude=43.7659095&longitude=-79.4141207&maxDistance=800`)
             .end((err, res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.body).to.be.a('object');

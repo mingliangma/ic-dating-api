@@ -1,4 +1,5 @@
-import { describe, beforeEach, it } from 'mocha';
+import { describe, beforeEach, before, it } from 'mocha';
+import populateDB from '../server/api/services/populate.db.service';
 
 const User = require('../server/model/user');
 const Sign = require('../server/model/sign');
@@ -7,403 +8,473 @@ const Sign = require('../server/model/sign');
 const chai = require('chai');
 const request = require('supertest');
 const server = require('../server/index').default;
+const url = require('url');
 
 const expect = chai.expect;
+// chai.should();
+// chai.use(require('chai-things'));
 
 // Our parent block
-describe('Sign Up Process', () => {
+describe('User', () => {
   beforeEach(done => { // Before each test we empty the database
     User.remove({}, err => {
-      done();
+      if (!err) {
+        console.log('user collection emptied');
+        addUsers().then(() => {
+          done();
+        }).catch(err1 => console.error(err1));
+      } else {
+        console.error(err);
+        done();
+      }
     });
   });
 
-  describe('/POST account/verify/phone', () => {
-    it('it should create a new account and send a verfication code', done => {
+  describe('/GET /api/v1/account/{accountId}', () => {
+    it('check get account', done => {
       request(server)
-        .post('/api/v1/account/verify/phone/+6475806776')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(400);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('error');
-          expect(res.body.error).to.equal('Bad Request');
-          expect(res.body).to.have.property('message');
-          expect(res.body.message).to.equal('To number: +6475806776, is not a mobile number');
-          done();
-        });
-    });
-
-    it('it should send a verfication code', done => {
-      request(server)
-        .post('/api/v1/account/verify/phone/+16475806776?disableSMS=true')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(201);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('success');
-          expect(res.body).to.have.property('codeForTesting');
-          expect(res.body.codeForTesting).to.be.a('string');
-          expect(res.body.success).to.equal(true);
-          done();
-        });
-    });
-
-    // it('it should send a verfication code', done => {
-    //   request(server)
-    //     .post('/api/v1/account/verify/phone/+16475806776')
-    //     .end((err, res) => {
-    //       expect(res.statusCode).to.equal(201);
-    //       expect(res.body).to.be.a('object');
-    //       expect(res.body).to.have.property('success');
-    //       expect(res.body).to.have.property('codeForTesting');
-    //       expect(res.body.codeForTesting).to.be.a('string');
-    //       expect(res.body.success).to.equal(true);
-    //       done();
-    //     });
-    // });
-  });
-
-  describe('/POST account/verify/phone/{phoneNum}/code/{code}', () => {
-    it('verify code', done => {
-      request(server)
-        .post('/api/v1/account/verify/phone/+16475806776?disableSMS=true')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(201);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('codeForTesting');
-          expect(res.body.codeForTesting).to.be.a('string');
-          expect(res.body.success).to.equal(true);
-
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .post(`/api/v1/account/verify/phone/+16475806776/code/${res.body.codeForTesting}`)
-            .end((err1, res1) => {
-              expect(res1.statusCode).to.equal(201);
-              expect(res1.body).to.have.property('token');
-              done();
-            });
-        });
-    });
+            .get(`/api/v1/account/${res0.body.accountId}`)
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.have.property('accountId');
 
-    it('verify code - expect fail', done => {
-      request(server)
-        .post('/api/v1/account/verify/phone/+16475806776?disableSMS=true')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(201);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('codeForTesting');
-          expect(res.body.codeForTesting).to.be.a('string');
-          expect(res.body.success).to.equal(true);
+              expect(res.body).to.have.property('displayName');
+              expect(res.body.displayName).to.equal('Cindy');
 
-          request(server)
-            .post('/api/v1/account/verify/phone/+16475806776/code/111')
-            .end((err1, res1) => {
-              console.log('res.body: ', res1.body);
-              expect(res1.statusCode).to.equal(401);
-              expect(res1.body).to.have.property('message');
-              expect(res1.body.message).to.equal('invalid verfication code');
+              expect(res.body).to.have.property('phoneNum');
+              expect(res.body.phoneNum).to.equal('+16471112222');
+
+              expect(res.body).to.have.property('ethnicity');
+              expect(res.body.ethnicity).to.equal('caucasian');
+
+              expect(res.body).to.have.property('dateOfBirth');
+              expect(res.body.dateOfBirth).to.equal('1993-02-02');
+
+              expect(res.body).to.have.property('gender');
+              expect(res.body.gender).to.equal('female');
+
+              expect(res.body).to.have.property('pictureUrl');
+              expect(res.body.pictureUrl).to.be.a('Array');
+
+              expect(res.body).to.have.property('pictureThumbnailUrl');
+              expect(res.body.pictureThumbnailUrl).to.be.a('Array');
+
+              expect(res.body).to.have.property('signId');
+              expect(res.body.signId).to.be.a('Array');
+
+              expect(res.body.signId[0]).to.have.property('signId');
+              expect(res.body.signId[0]).to.have.property('signName');
+              expect(res.body.signId[0]).to.have.property('signIconUrl');
+              expect(res.body.signId[0].signId).to.equal(1);
+              expect(res.body.signId[0].signName).to.equal('clubbing');
+              expect(res.body.signId[0].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/clubbing_a.png');
+
+              expect(res.body.signId[1]).to.have.property('signId');
+              expect(res.body.signId[1]).to.have.property('signName');
+              expect(res.body.signId[1]).to.have.property('signIconUrl');
+              expect(res.body.signId[1].signId).to.equal(2);
+              expect(res.body.signId[1].signName).to.equal('coffee');
+              expect(res.body.signId[1].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/coffee_a.png');
+
+              expect(res.body.signId[2]).to.have.property('signId');
+              expect(res.body.signId[2]).to.have.property('signName');
+              expect(res.body.signId[2]).to.have.property('signIconUrl');
+              expect(res.body.signId[2].signId).to.equal(3);
+              expect(res.body.signId[2].signName).to.equal('eat');
+              expect(res.body.signId[2].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/eat_a.png');
+
               done();
             });
         });
     });
   });
 
-  describe('/PUT account - init account', () => {
-    it('init account', done => {
+  describe('/POST /api/v1/account/{accountId}', () => {
+    it('check update account - Signs', done => {
       request(server)
-        .post('/api/v1/account/verify/phone/+16475806776?disableSMS=true')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(201);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('codeForTesting');
-          expect(res.body.codeForTesting).to.be.a('string');
-          expect(res.body.success).to.equal(true);
-
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
           request(server)
-            .post(`/api/v1/account/verify/phone/+16475806776/code/${res.body.codeForTesting}`)
-            .end((err1, res1) => {
-              expect(res1.statusCode).to.equal(201);
-              expect(res1.body).to.have.property('token');
+            .put(`/api/v1/account/${res0.body.accountId}`)
+            .set({ token: res0.body.token })
+            .send({ signId: [4, 5, 6] })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.have.property('accountId');
+
+              expect(res.body).to.have.property('displayName');
+              expect(res.body.displayName).to.equal('Cindy');
+
+              expect(res.body).to.have.property('phoneNum');
+              expect(res.body.phoneNum).to.equal('+16471112222');
+
+              expect(res.body).to.have.property('ethnicity');
+              expect(res.body.ethnicity).to.equal('caucasian');
+
+              expect(res.body).to.have.property('dateOfBirth');
+              expect(res.body.dateOfBirth).to.equal('1993-02-02');
+
+              expect(res.body).to.have.property('gender');
+              expect(res.body.gender).to.equal('female');
+
+              expect(res.body).to.have.property('pictureUrl');
+              expect(res.body.pictureUrl).to.be.a('Array');
+
+              expect(res.body).to.have.property('pictureThumbnailUrl');
+              expect(res.body.pictureThumbnailUrl).to.be.a('Array');
+
+              expect(res.body).to.have.property('signId');
+              expect(res.body.signId).to.be.a('Array');
+              expect(res.body.signId).to.have.lengthOf(3);
+
+              expect(res.body.signId[0]).to.have.property('signId');
+              expect(res.body.signId[0]).to.have.property('signName');
+              expect(res.body.signId[0]).to.have.property('signIconUrl');
+              expect(res.body.signId[0].signId).to.equal(4);
+              expect(res.body.signId[0].signName).to.equal('excercise');
+              expect(res.body.signId[0].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/excercise_a.png');
+
+              expect(res.body.signId[1]).to.have.property('signId');
+              expect(res.body.signId[1]).to.have.property('signName');
+              expect(res.body.signId[1]).to.have.property('signIconUrl');
+              expect(res.body.signId[1].signId).to.equal(5);
+              expect(res.body.signId[1].signName).to.equal('gay');
+              expect(res.body.signId[1].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/gay_a.png');
+
+              expect(res.body.signId[2]).to.have.property('signId');
+              expect(res.body.signId[2]).to.have.property('signName');
+              expect(res.body.signId[2]).to.have.property('signIconUrl');
+              expect(res.body.signId[2].signId).to.equal(6);
+              expect(res.body.signId[2].signName).to.equal('jog');
+              expect(res.body.signId[2].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/jog_a.png');
 
               request(server)
-                .put('/api/v1/account')
-                .set('token', res1.body.token)
-                .send({
-                  password: '88888888',
-                  displayName: 'Mingliang Ma',
-                  ethnicity: 'asian',
-                  dateOfBirth: '1987-11-02',
-                  gender: 'male',
-                })
-                .end((err2, res2) => {
-                  if (err2) console.error(err2);
-                  expect(res2.statusCode).to.equal(201);
-                  expect(res2.body).to.have.property('accountId');
+                .get(`/api/v1/account/${res0.body.accountId}`)
+                .end((err1, res1) => {
+                  expect(res1.statusCode).to.equal(200);
+                  expect(res.body.signId).to.have.lengthOf(3);
+                  expect(res.body.signId[0]).to.have.property('signId');
+                  expect(res.body.signId[0]).to.have.property('signName');
+                  expect(res.body.signId[0]).to.have.property('signIconUrl');
+                  expect(res.body.signId[0].signId).to.equal(4);
+                  expect(res.body.signId[0].signName).to.equal('excercise');
+                  expect(res.body.signId[0].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/excercise_a.png');
 
-                  expect(res2.body).to.have.property('displayName');
-                  expect(res2.body.displayName).to.equal('Mingliang Ma');
+                  expect(res.body.signId[1]).to.have.property('signId');
+                  expect(res.body.signId[1]).to.have.property('signName');
+                  expect(res.body.signId[1]).to.have.property('signIconUrl');
+                  expect(res.body.signId[1].signId).to.equal(5);
+                  expect(res.body.signId[1].signName).to.equal('gay');
+                  expect(res.body.signId[1].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/gay_a.png');
 
-                  expect(res2.body).to.have.property('phoneNum');
-                  expect(res2.body.phoneNum).to.equal('+16475806776');
-
-                  expect(res2.body).to.have.property('ethnicity');
-                  expect(res2.body.ethnicity).to.equal('asian');
-
-                  expect(res2.body).to.have.property('dateOfBirth');
-                  expect(res2.body.dateOfBirth).to.equal('1987-11-02');
-
-                  expect(res2.body).to.have.property('gender');
-                  expect(res2.body.gender).to.equal('male');
-
-                  expect(res2.body).to.have.property('pictureUrl');
-                  expect(res2.body.pictureUrl).to.be.a('Array');
-
-                  expect(res2.body).to.have.property('pictureThumbnailUrl');
-                  expect(res2.body.pictureThumbnailUrl).to.be.a('Array');
-
-                  expect(res2.body).to.have.property('signId');
-                  expect(res2.body.signId).to.be.a('Array');
-
-                  expect(res2.body).to.not.have.property('distance');
-
+                  expect(res.body.signId[2]).to.have.property('signId');
+                  expect(res.body.signId[2]).to.have.property('signName');
+                  expect(res.body.signId[2]).to.have.property('signIconUrl');
+                  expect(res.body.signId[2].signId).to.equal(6);
+                  expect(res.body.signId[2].signName).to.equal('jog');
+                  expect(res.body.signId[2].signIconUrl).to.equal('https://s3.amazonaws.com/ic-dating/signs/jog_a.png');
                   done();
                 });
             });
         });
     });
-  });
 
-  describe('/PUT account/login', () => {
-    it('login', done => {
+    it('check update account - description', done => {
       request(server)
-        .post('/api/v1/account/verify/phone/+16475806776?disableSMS=true')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(201);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('codeForTesting');
-          expect(res.body.codeForTesting).to.be.a('string');
-          expect(res.body.success).to.equal(true);
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+          request(server)
+            .put(`/api/v1/account/${res0.body.accountId}`)
+            .set({ token: res0.body.token })
+            .send({ description: 'I am an entrepreneur' })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.have.property('accountId');
+
+              expect(res.body).to.have.property('displayName');
+              expect(res.body.displayName).to.equal('Cindy');
+
+              expect(res.body).to.have.property('description');
+              expect(res.body.description).to.equal('I am an entrepreneur');
+
+              done();
+            });
+        });
+    });
+
+
+    it('check update account - pictureUrl', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+
 
           request(server)
-            .post(`/api/v1/account/verify/phone/+16475806776/code/${res.body.codeForTesting}`)
-            .end((err1, res1) => {
-              expect(res1.statusCode).to.equal(201);
-              expect(res1.body).to.have.property('token');
+            .put(`/api/v1/account/${res0.body.accountId}`)
+            .set({ token: res0.body.token })
+            .send({ pictureUrl: ['https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-PGKY5V2.jpg'] })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.have.property('accountId');
+
+              expect(res.body).to.have.property('displayName');
+              expect(res.body.displayName).to.equal('Cindy');
+
+              expect(res.body).to.have.property('pictureUrl');
+              expect(res.body.pictureUrl).to.have.lengthOf(1);
+              expect(res.body.pictureUrl[0]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/2/resized/large/beautiful-woman-PGKY5V2.jpg');
+
+              done();
+            });
+        });
+    });
+
+    it('check update account - description and empty picture URL', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+          request(server)
+            .put(`/api/v1/account/${res0.body.accountId}`)
+            .set({ token: res0.body.token })
+            .send({ description: 'I am an entrepreneur', pictureUrl: [] })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.have.property('accountId');
+
+              expect(res.body).to.have.property('displayName');
+              expect(res.body.displayName).to.equal('Cindy');
+
+              expect(res.body).to.have.property('description');
+              expect(res.body.description).to.equal('I am an entrepreneur');
+
+              done();
+            });
+        });
+    });
+
+    it('check update account - description and empty signs', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+          request(server)
+            .put(`/api/v1/account/${res0.body.accountId}`)
+            .set({ token: res0.body.token })
+            .send({ description: 'I am an entrepreneur', signId: [] })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.have.property('accountId');
+
+              expect(res.body).to.have.property('displayName');
+              expect(res.body.displayName).to.equal('Cindy');
+
+              expect(res.body).to.have.property('description');
+              expect(res.body.description).to.equal('I am an entrepreneur');
+
+              done();
+            });
+        });
+    });
+  });
+
+  describe('Post/Delete /api/v1/account/{accountId}/image', () => {
+    it('check add picture url', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+
+          request(server)
+            .put(`/api/v1/account/${res0.body.accountId}/image`)
+            .set({ token: res0.body.token })
+            .send({ pictureUrl: 'https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-PGKY5V2.jpg' })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+
+              expect(res.body).to.have.property('pictureUrl');
+              expect(res.body.pictureUrl).to.have.lengthOf(4);
+              expect(res.body.pictureUrl[3]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/2/resized/large/beautiful-woman-PGKY5V2.jpg');
+
+              done();
+            });
+        });
+    });
+
+    it('check add 3 picture url', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+
+          request(server)
+            .put(`/api/v1/account/${res0.body.accountId}/image`)
+            .set({ token: res0.body.token })
+            .send({ pictureUrl: 'https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-PGKY5V2.jpg' })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
 
               request(server)
-                .put('/api/v1/account')
-                .set('token', res1.body.token)
-                .send({
-                  password: '88888888',
-                  displayName: 'Mingliang Ma',
-                  ethnicity: 'asian',
-                  dateOfBirth: '1987-11-02',
-                  gender: 'male',
-                })
-                .end((err2, res2) => {
-                  if (err2) console.error(err2);
-                  expect(res2.statusCode).to.equal(201);
-                  expect(res2.body).to.have.property('accountId');
-
-                  expect(res2.body).to.have.property('phoneNum');
-                  expect(res2.body.phoneNum).to.equal('+16475806776');
+                .put(`/api/v1/account/${res0.body.accountId}/image`)
+                .set({ token: res0.body.token })
+                .send({ pictureUrl: 'https://s3.amazonaws.com/ic-dating/profiles/women/pexels-photo-274645.jpg' })
+                .end((err1, res1) => {
+                  expect(res1.statusCode).to.equal(200);
 
                   request(server)
-                    .post('/api/v1/account/login')
-                    .send({
-                      password: '88888888',
-                      phoneNum: res2.body.phoneNum,
-                    })
-                    .end((err3, res3) => {
-                      if (err3) console.error(err3);
-                      expect(res3.statusCode).to.equal(201);
-                      expect(res3.body).to.have.property('token');
+                    .put(`/api/v1/account/${res0.body.accountId}/image`)
+                    .set({ token: res0.body.token })
+                    .send({ pictureUrl: 'https://s3.amazonaws.com/ic-dating/profiles/women/pexels-photo-289225.jpg' })
+                    .end((err2, res2) => {
+                      expect(res2.statusCode).to.equal(200);
 
-                      expect(res3.body).to.have.property('userId');
-                      expect(res3.body.accountId).to.equal(res2.body.accountId);
-
+                      expect(res2.body).to.have.property('pictureUrl');
+                      expect(res2.body.pictureUrl).to.have.lengthOf(6);
+                      expect(res2.body.pictureUrl[3]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/2/resized/large/beautiful-woman-PGKY5V2.jpg');
+                      expect(res2.body.pictureUrl[4]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/women/resized/large/pexels-photo-274645.jpg');
+                      expect(res2.body.pictureUrl[5]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/women/resized/large/pexels-photo-289225.jpg');
                       done();
                     });
                 });
             });
         });
     });
-  });
 
-  describe('/PUT account/me', () => {
-    it('validate token', done => {
+    it('check delete picture url - 1', done => {
       request(server)
-        .post('/api/v1/account/verify/phone/+16475806776?disableSMS=true')
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(201);
-          expect(res.body).to.be.a('object');
-          expect(res.body).to.have.property('codeForTesting');
-          expect(res.body.codeForTesting).to.be.a('string');
-          expect(res.body.success).to.equal(true);
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
 
           request(server)
-            .post(`/api/v1/account/verify/phone/+16475806776/code/${res.body.codeForTesting}`)
-            .end((err1, res1) => {
-              expect(res1.statusCode).to.equal(201);
-              expect(res1.body).to.have.property('token');
+            .delete(`/api/v1/account/${res0.body.accountId}/image`)
+            .set({ token: res0.body.token })
+            .send({ pictureUrl: 'https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-PGKY5V2.jpg' })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
 
-              request(server)
-                .get('/api/v1/account/me')
-                .set('token', res1.body.token)
-                .end((err2, res2) => {
-                  expect(res2.statusCode).to.equal(200);
-                  expect(res2.body).to.have.property('accountId');
-                  done();
-                });
+              expect(res.body).to.have.property('pictureUrl');
+              expect(res.body.pictureUrl).to.have.lengthOf(3);
+
+              done();
+            });
+        });
+    });
+
+    it('check delete picture url - 2', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+
+          request(server)
+            .delete(`/api/v1/account/${res0.body.accountId}/image`)
+            .set({ token: res0.body.token })
+            .send({ pictureUrl: 'https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-in-sunglasses-PHZVNKU.jpg' })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+
+              expect(res.body).to.have.property('pictureUrl');
+              expect(res.body.pictureUrl).to.have.lengthOf(2);
+              expect(res.body.pictureUrl[0]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/1/resized/large/beautiful-sexy-woman-with-suspenders-PD7CDDJ.jpg');
+              expect(res.body.pictureUrl[1]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/1/resized/large/beautiful-woman-looking-at-the-sky-PY8W2BD.jpg');
+
+              done();
+            });
+        });
+    });
+  });
+
+  describe('GET /account/{accountId}/image/gen-presigned-url', () => {
+    it('check generate presigned url', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+
+          request(server)
+            .get(`/api/v1/account/${res0.body.accountId}/image/gen-presigned-url`)
+            .set({ token: res0.body.token })
+            .query({ fileName: 'test.png', fileType: 'image/png' })
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+
+              expect(res.body).to.have.property('signedURL');
+
+              const q = url.parse(res.body.signedURL, true);
+              expect(q.host).to.equal('ic-dating.s3.amazonaws.com');
+              expect(q.pathname).to.equal(`/profiles/${res0.body.accountId}/test.png`);
+              expect(q.query).to.be.a('object');
+              expect(q.query).to.have.property('AWSAccessKeyId');
+              expect(q.query).to.have.property('Content-Type');
+              expect(q.query).to.have.property('Expires');
+              expect(q.query).to.have.property('Signature');
+              expect(res.body).to.have.property('fileLink');
+
+              expect(res.body.fileLink).to.equal(
+                `https://s3.amazonaws.com/ic-dating/profiles/${res0.body.accountId}/test.png`,
+              );
+
+              done();
             });
         });
     });
   });
 });
 
-function populateUser() {
-  const signInfoArray = [{
-    sign_id: 1,
-    sign_name: 'clubbing',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/clubbing_a.png',
-  },
-  {
-    sign_id: 2,
-    sign_name: 'coffee',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/coffee_a.png',
-  },
-  {
-    sign_id: 3,
-    sign_name: 'eat',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/eat_a.png',
-  },
-  {
-    sign_id: 4,
-    sign_name: 'excercise',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/excercise_a.png',
-  },
-  {
-    sign_id: 5,
-    sign_name: 'gay',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/gay_a.png',
-  },
-  {
-    sign_id: 6,
-    sign_name: 'jog',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/jog_a.png',
-  },
-  {
-    sign_id: 7,
-    sign_name: 'mahjong',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/mahjong_a.png',
-  },
-  {
-    sign_id: 8,
-    sign_name: 'money',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/money_a.png',
-  },
-  {
-    sign_id: 9,
-    sign_name: 'shopping',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/shopping_a.png',
-  },
-  {
-    sign_id: 10,
-    sign_name: 'sleep',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/sleep_a.png',
-  },
-  {
-    sign_id: 11,
-    sign_name: 'walk_dog',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/walk_dog_a.png',
-  },
+function addUsers() {
+  return new Promise((resolve, reject) => {
+    const signs = populateDB.prepareSignsPromise();
 
-  { sign_id: 12,
-    sign_name: 'watch_movie',
-    sign_icon_url: 'https://s3.amazonaws.com/ic-dating/signs/watch_movie_a.png',
-  }];
+    Promise.all(signs).catch(err => {
+      if (err.code === 11000 || err.code === 11001) {
+        return Sign.find({});
+      }
+    }).then(results => {
+      const signMap = new Map();
+      results.forEach(sign => {
+        signMap.set(sign.sign_id, sign);
+      });
 
-  const signMap = new Map();
-  const signs = [];
-
-  for (let i = 0; i < signInfoArray.length; i += 1) {
-    // console.log('i=', i, '  sign: ', signInfoArray[i].sign_name);
-    signs.push(new Sign(signInfoArray[i]).save());
-  }
-
-  Promise.all(signs).then(results => {
-    // console.log('results: ', results);
-    results.forEach(sign => {
-      // console.log('set signMap: ', sign.sign_id);
-      signMap.set(sign.sign_id, sign);
-    });
-
-    new User({
-      phone_num: '+11111111111',
-      password: '',
-      display_name: 'Cindy',
-      ethnicity: 'caucasian',
-      date_of_birth: '1993-02-02',
-      gender: 'female',
-      picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-sexy-woman-with-suspenders-PD7CDDJ.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-in-sunglasses-PHZVNKU.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-looking-at-the-sky-PY8W2BD.jpg'],
-      sign: [signMap.get(1), signMap.get(2), signMap.get(3)],
-    }).save();
-
-
-    new User({
-      phone_num: '+21111111111',
-      password: '',
-      display_name: 'Janice',
-      ethnicity: 'native_american',
-      date_of_birth: '1994-02-02',
-      gender: 'female',
-      picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-PGKY5V2.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/2/beautiful-woman-using-smart-phone-and-listening-PRR5KSY.jpg'],
-      sign: [signMap.get(4), signMap.get(5), signMap.get(6)],
-    }).save();
-
-    new User({
-      phone_num: '+31111111111',
-      password: '',
-      display_name: 'Ashley',
-      ethnicity: 'caucasian',
-      date_of_birth: '1987-02-02',
-      gender: 'female',
-      picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-sexy-woman-with-suspenders-PD7CDDJ.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/3/beauty-woman-at-the-seaside-PKSLWYC.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/3/beauty-woman-at-the-seaside-PPJC9TA.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/3/beauty-woman-at-the-seaside-PQUDJC6.jpg'],
-      sign: [signMap.get(7), signMap.get(8), signMap.get(9)],
-    }).save();
-
-    new User({
-      phone_num: '+41111111111',
-      password: '',
-      display_name: 'Allie',
-      ethnicity: 'caucasian',
-      date_of_birth: '1997-02-02',
-      gender: 'female',
-      picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/4/young-beautiful-brunette-woman-PVZ4V7Z.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/4/young-woman-flexing-muscles-with-dumbbell-in-gym-PCWR2LF.jpg'],
-      sign: [signMap.get(10), signMap.get(11), signMap.get(12)],
-    }).save();
-
-    new User({
-      phone_num: '+51111111111',
-      password: '',
-      display_name: 'Heather',
-      ethnicity: 'caucasian',
-      date_of_birth: '1991-02-02',
-      gender: 'female',
-      picture_url: ['https://s3.amazonaws.com/ic-dating/profiles/5/happy-beautiful-young-woman-standing-and-talking-PNGKKME.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/5/sensual-attractive-young-woman-with-red-lips-PA4LCMB.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-cutting-vegetables-PKTD234.jpg',
-        'https://s3.amazonaws.com/icdating/profiles/5/young-woman-exercising-in-the-rain-PCNHPT8.jpg',
-        'https://s3.amazonaws.com/ic-dating/profiles/5/young-woman-leaning-against-art-sculpture-PVSFSJY.jpg'],
-      sign: [signMap.get(5), signMap.get(9), signMap.get(2)],
-    }).save();
-  })
-    .catch(err => {
-      // console.error(err.message);
-    });
+      const users = [];
+      populateDB.populatePresetUsers(users, signMap);
+      return Promise.all(users);
+    }).then(users => resolve(users))
+      .catch(err => {
+        if (err.code === 11000 || err.code === 11001) {
+          resolve();
+        } else {
+          reject();
+        }
+      });
+  });
 }

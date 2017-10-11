@@ -271,7 +271,9 @@ paths:
             type: object
             properties:
               pictureUrl:
-                type: string
+                type: array
+                items:
+                    type: string
         401:
           description: Invalid token
         404:
@@ -311,7 +313,9 @@ paths:
             type: object
             properties:
               pictureUrl:
-                type: string
+                type: array
+                items:
+                    type: string
         401:
           description: Invalid token
         404:
@@ -328,6 +332,11 @@ paths:
       - name: accountId
         in: path
         description: The account that needs to be fetched.
+        required: true
+        type: string
+      - name: token
+        description: The web token returned at login or registration
+        in: header
         required: true
         type: string
       - name: fileName
@@ -350,7 +359,47 @@ paths:
         404:
           description: User not found
 
-          
+  /account/{accountId}/location:
+    put:
+      tags:
+      - account
+      summary: update my location coordinate
+      operationId: updateMyLocaion
+      produces:
+        - application/json
+      parameters:
+      - name: accountId
+        in: path
+        description: The account that needs to be fetched.
+        required: true
+        type: string
+      - name: token
+        description: The web token returned at login or registration
+        in: header
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: The picture url to be added
+        schema:
+          type: object
+          properties:
+            longitude:
+              type: number
+            latitude:
+              type: number
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              successful:
+                type: boolean
+        401:
+          description: Invalid token
+        404:
+          description: User not found
   /account/list:
     get:
       tags:

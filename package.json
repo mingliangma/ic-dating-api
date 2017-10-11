@@ -45,7 +45,8 @@
     "eslint-plugin-import": "^2.7.0",
     "mocha": "^3.5.3",
     "shelljs": "^0.7.8",
-    "supertest": "^3.0.0"
+    "supertest": "^3.0.0",
+    "url-parse": "^1.1.9"
   },
   "author": "Carmine DiMascio <cdimascio@gmail.com> (https://github.com/cdimascio)"
 }

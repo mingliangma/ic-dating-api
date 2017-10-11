@@ -174,7 +174,7 @@ export class Controller {
         // generate web token
         // console.log('generateToken1');
         const token = JwtService.generateToken(phoneNum, user._id);
-        res.status(201).json({ success: true, token, userId: user._id });
+        res.status(201).json({ success: true, token, userId: user._id, accountId: user._id });
         p.cancel();
       }).catch(err => {
         if (err.code === 11000 || err.code === 11001) {
@@ -185,7 +185,7 @@ export class Controller {
         p.cancel();
       }).then(user => {
         const token = JwtService.generateToken(phoneNum, user._id);
-        res.status(201).json({ success: true, token, userId: user._id });
+        res.status(201).json({ success: true, token, userId: user._id, accountId: user._id });
       }).catch(err => {
         console.log(err);
         res.boom.forbidden(err.errmsg);
@@ -251,14 +251,18 @@ export class Controller {
             return user;
           }
         }
-
+        console.log('before picture_url: ', user.picture_url);
         const u = user;
         u.picture_url.push(req.body.pictureUrl);
         u.updated_at = moment().toDate();
 
+        console.log('picture_url: ', u.picture_url);
+
         return u.save();
       }).then(u => {
-        res.status(200).json({ pictureUrl: u.picture_url });
+        res.status(200).json({
+          pictureUrl: ResponseService.getCompressedPictureUrl(u.picture_url),
+        });
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
@@ -294,7 +298,9 @@ export class Controller {
         }
         return user.save();
       }).then(u => {
-        res.status(200).json({ pictureUrl: u.picture_url });
+        res.status(200).json({
+          pictureUrl: ResponseService.getCompressedPictureUrl(u.picture_url),
+        });
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
@@ -334,7 +340,7 @@ export class Controller {
           if (!result[0]) {
             throw new UserNotFoundError();
           }
-          if (!result[1]) {
+          if (req.body.signId.length > 0 && !result[1]) {
             throw new SignNotFoundError();
           }
 
@@ -361,7 +367,7 @@ export class Controller {
           return u.save();
         }
       }).then(u => {
-        res.status(200).json(generateAccountResponse(u));
+        res.status(200).json(ResponseService.generateAccountResponse(u));
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
       }).catch(jwt.JsonWebTokenError, err => {
@@ -384,13 +390,13 @@ export class Controller {
     console.log('accountId: ', req.params.accountId);
     console.log('accountId is valid: ', mongoose.Types.ObjectId.isValid(req.params.accountId));
 
-    AccountService.findOneByIdPromise(req.params.accountId)
+    AccountService.findOneAndPopulate('_id', req.params.accountId, 'sign')
       .then(user => {
         if (!user) {
           throw new UserNotFoundError();
         } else {
           const u = user;
-          res.status(200).json(generateAccountResponse(u));
+          res.status(200).json(ResponseService.generateAccountResponse(u));
         }
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
@@ -480,10 +486,9 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
-    AccountService.accountExistById(req.params.accountId)
-      .then(result => {
-        console.log('accountExistById: ', result);
-      })
+    JwtService.verifyToken(req.headers.token)
+      .then(() => AccountService.accountExistById(req.params.accountId))
+      .then(result => console.log('accountExistById: ', result))
       .then(() => AwsService.generatePutPreSignedURL(
         req.query.fileName,
         req.query.fileType,
@@ -526,6 +531,36 @@ export class Controller {
         res.status(201).json({ success: true });
       }).catch(err => {
         res.status(400).json(err);
+      });
+  }
+
+  updateMyLocation(req, res) {
+    JwtService.verifyToken(req.headers.token)
+      .then(decoded =>
+        User.findById(decoded.accountId),
+      ).then(user => {
+        if (!user) {
+          throw new UserNotFoundError();
+        } else {
+          console.log(user.geometry);
+          const u = user;
+          if (req.body.latitude && req.body.longitude) {
+            u.geometry = { type: 'Point', coordinates: [req.body.longitude, req.body.latitude] };
+          }
+          u.updated_at = moment().toDate();
+          return u.save();
+        }
+      }).then(u => {
+        res.status(201).json(u.geometry);
+      }).catch(jwt.TokenExpiredError, () => {
+        res.boom.unauthorized('TokenExpiredError: JWT token expired');
+      }).catch(jwt.JsonWebTokenError, err => {
+        res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
+      }).catch(err => {
+        l.error(err);
+        res.boom.badImplementation(err.message);
       });
   }
 }

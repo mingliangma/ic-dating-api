@@ -14,6 +14,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const boom = require('express-boom');
 const l = require('pino')();
+// const firebaseAdmin = require('firebase-admin');
 
 // const cors = require('cors');
 
@@ -44,9 +45,17 @@ export default class ExpressServer {
 
     app.use(boom());
 
-    // app.options('*', cors())
+    // firebaseAdmin.initializeApp({
+    //   credential: firebaseAdmin.credential.cert({
+    //     projectId: process.env.PROJECT_ID.toString(),
+    //     clientEmail: process.env.CLIENT_EMAIL.toString(),
+    //     privateKey: process.env.PRIVATE_KEY.toString(),
+    //   }),
+    //   databaseURL: process.env.DATABAE_URL.toString(),
+    // });
 
-    populateDB.populate();
+    // app.options('*', cors())
+    if (process.env.NODE_ENV !== 'test') populateDB.populate();
   }
 
   router(routes) {
