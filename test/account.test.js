@@ -15,7 +15,7 @@ const expect = chai.expect;
 // chai.use(require('chai-things'));
 
 // Our parent block
-describe('User', () => {
+describe('Account', () => {
   beforeEach(done => { // Before each test we empty the database
     User.remove({}, err => {
       if (!err) {
@@ -64,6 +64,11 @@ describe('User', () => {
 
               expect(res.body).to.have.property('pictureThumbnailUrl');
               expect(res.body.pictureThumbnailUrl).to.be.a('Array');
+
+              expect(res.body).to.have.property('originalPictureUrl');
+              expect(res.body.originalPictureUrl[0]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-sexy-woman-with-suspenders-PD7CDDJ.jpg');
+              expect(res.body.originalPictureUrl[1]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-in-sunglasses-PHZVNKU.jpg');
+              expect(res.body.originalPictureUrl[2]).to.equal('https://s3.amazonaws.com/ic-dating/profiles/1/beautiful-woman-looking-at-the-sky-PY8W2BD.jpg');
 
               expect(res.body).to.have.property('signId');
               expect(res.body.signId).to.be.a('Array');

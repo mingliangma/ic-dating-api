@@ -26,6 +26,7 @@ const generateAccountResponse = (user, reqQuery) => {
       phoneNum: user.phone_num,
       pictureUrl: getSquarePictureUrl(user.picture_url),
       pictureThumbnailUrl: getCompressedPictureUrl(user.picture_url),
+      originalPictureUrl: user.picture_url,
       description: user.description,
       signId: signResponse,
     };
@@ -71,4 +72,4 @@ module.exports = {
   generateAccountResponse,
   getCompressedPictureUrl,
   getSquarePictureUrl,
-}
+};

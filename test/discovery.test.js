@@ -14,7 +14,7 @@ const expect = chai.expect;
 // chai.use(require('chai-things'));
 
 // Our parent block
-describe('User', () => {
+describe('Discovery', () => {
   before(done => { // Before the tests we empty the database
     User.remove({}, err => {
       if (!err) {
