@@ -5,3 +5,4 @@ node_modules
 test.jpeg
 test.png
 UploadFileToS3Sample.js
+/test

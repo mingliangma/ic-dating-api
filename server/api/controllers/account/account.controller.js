@@ -14,7 +14,7 @@ import Hide from '../../../model/hide';
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const Promise = require('bluebird');
-
+const firebase = require('firebase');
 const moment = require('moment');
 const { validationResult } = require('express-validator/check');
 
@@ -85,23 +85,23 @@ export class Controller {
   me(req, res) {
     // console.log('token: ', req.headers.token);
 
-    JwtService.verifyToken(req.headers.token)
-      .then(decoded =>
+    JwtService.verifyFirebaseIDToken(req.headers.token)
+      .then(decoded => {
+        console.log('Successfully verified Firebase ID Token');
         // l.debug(decoded);
-        AccountService.findOneAndPopulate('phone_num', decoded.phoneNum, 'sign'),
-      )
+        return AccountService.findOneAndPopulate('phone_num', decoded.phoneNum, 'sign');
+      })
       .then(u => {
         if (!u) {
           throw new UserNotFoundError('User not found');
         } else {
           res.status(200).json(ResponseService.generateAccountResponse(u));
         }
-      }).catch(jwt.TokenExpiredError, () => {
-        res.boom.unauthorized('TokenExpiredError: JWT token expired');
-      }).catch(jwt.JsonWebTokenError, err => {
-        res.boom.unauthorized(`JsonWebTokenError: ${err.message}`);
+      }).catch(UserNotFoundError, () => {
+        res.boom.notFound('account id not found');
       }).catch(err => {
         // l.info(err);
+        console.log('Error creating custom token:', err.message);
         res.boom.unauthorized(err.message);
       });
   }
@@ -168,13 +168,18 @@ export class Controller {
     }
     l.info(`code verified for phone number ${phoneNum}`);
 
-
+    let u = null;
     const p = AccountService.createAccount(phoneNum)
       .then(user => {
-        // generate web token
-        // console.log('generateToken1');
-        const token = JwtService.generateToken(phoneNum, user._id);
-        res.status(201).json({ success: true, token, userId: user._id, accountId: user._id });
+        u = user;
+        return JwtService.generateFirebaseCustomToken(phoneNum, user._id);
+      }).then(customToken => {
+        res.status(201).json({
+          success: true,
+          token: customToken,
+          userId: u._id,
+          accountId: u._id,
+        });
         p.cancel();
       }).catch(err => {
         if (err.code === 11000 || err.code === 11001) {
@@ -184,8 +189,15 @@ export class Controller {
         res.boom.forbidden(err.errmsg);
         p.cancel();
       }).then(user => {
-        const token = JwtService.generateToken(phoneNum, user._id);
-        res.status(201).json({ success: true, token, userId: user._id, accountId: user._id });
+        u = user;
+        return JwtService.generateFirebaseCustomToken(phoneNum, user._id);
+      }).then(customToken => {
+        res.status(201).json({
+          success: true,
+          token: customToken,
+          userId: u._id,
+          accountId: u._id,
+        });
       }).catch(err => {
         console.log(err);
         res.boom.forbidden(err.errmsg);
@@ -200,9 +212,9 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
     console.log('req.body.dateOfBirth: ', req.body.dateOfBirth);
-    JwtService.verifyToken(req.headers.token)
+    JwtService.verifyFirebaseIDToken(req.headers.token)
       .then(decoded =>
-        User.findById(decoded.accountId),
+        User.findById(decoded.uid),
       ).then(user => {
         if (!user) {
           throw new UserNotFoundError();
@@ -239,8 +251,9 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
-    JwtService.verifyToken(req.headers.token)
-      .then(decoded => User.findById(decoded.accountId))
+
+    JwtService.verifyFirebaseIDToken(req.headers.token)
+      .then(decoded => User.findById(decoded.uid))
       .then(user => {
         if (!user) {
           throw new UserNotFoundError();
@@ -282,8 +295,8 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
-    JwtService.verifyToken(req.headers.token)
-      .then(decoded => User.findById(decoded.accountId))
+    JwtService.verifyFirebaseIDToken(req.headers.token)
+      .then(decoded => User.findById(decoded.uid))
       .then(u => {
         if (!u) {
           throw new UserNotFoundError();
@@ -323,17 +336,17 @@ export class Controller {
     }
 
     console.log('signId: ', req.body.signId);
-    JwtService.verifyToken(req.headers.token)
+    JwtService.verifyFirebaseIDToken(req.headers.token)
       .then(decoded => {
         if (req.body.signId) {
-          const promiseArray = [User.findById(decoded.accountId)];
+          const promiseArray = [User.findById(decoded.uid)];
           for (let j = 0; j < req.body.signId.length; j++) {
             promiseArray.push(Sign.findOne({ sign_id: req.body.signId[j] }));
           }
 
           return Promise.all(promiseArray);
         }
-        return User.findById(decoded.accountId);
+        return User.findById(decoded.uid);
       })
       .then(result => {
         if (result instanceof Array) {
@@ -431,14 +444,32 @@ export class Controller {
       comparePassword.cancel();
     });
 
-    Promise.all([findOne, comparePassword]).then(([user, compareResult]) => {
-      if (compareResult) {
-        const token = JwtService.generateToken(req.body.phoneNum, user._id);
-        res.status(201).json({ success: true, token, userId: user._id, accountId: user._id });
-      } else {
-        res.boom.unauthorized('incorrect password');
-      }
-    });
+    Promise.all([findOne, comparePassword])
+      .then(([user, compareResult]) => {
+        if (compareResult) {
+          let cToken = null;
+          JwtService.generateFirebaseCustomToken(req.body.phoneNum, user._id)
+            .then(customToken => {
+              cToken = customToken;
+              return firebase.auth().signInWithCustomToken(customToken);
+            })
+            .then(() => firebase.auth().currentUser.getIdToken(true))
+            .then(idToken => {
+              res.status(201).json({
+                success: true,
+                token: cToken,
+                testingIDToken: idToken,
+                userId: user._id,
+                accountId: user._id,
+              });
+            }).catch(err => console.error(err));
+        } else {
+          res.boom.unauthorized('incorrect password');
+        }
+      }).catch(err => {
+        console.error(err);
+        res.boom.badImplementation(err.message);
+      });
   }
 
   list(req, res) {
@@ -486,7 +517,7 @@ export class Controller {
       return res.status(422).json({ errors: errors.mapped() });
     }
 
-    JwtService.verifyToken(req.headers.token)
+    JwtService.verifyFirebaseIDToken(req.headers.token)
       .then(() => AccountService.accountExistById(req.params.accountId))
       .then(result => console.log('accountExistById: ', result))
       .then(() => AwsService.generatePutPreSignedURL(
@@ -535,9 +566,9 @@ export class Controller {
   }
 
   updateMyLocation(req, res) {
-    JwtService.verifyToken(req.headers.token)
+    JwtService.verifyFirebaseIDToken(req.headers.token)
       .then(decoded =>
-        User.findById(decoded.accountId),
+        User.findById(decoded.uid),
       ).then(user => {
         if (!user) {
           throw new UserNotFoundError();

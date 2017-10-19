@@ -590,6 +590,21 @@ paths:
         '200':
           description: List of signs
 
+  /system/status:
+    get:
+      tags:
+        - system
+      summary: Get system status
+      description: ''
+      operationId: getSigns
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: System status
+
 definitions:
   Token:
     type: object

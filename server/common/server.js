@@ -14,7 +14,8 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const boom = require('express-boom');
 const l = require('pino')();
-// const firebaseAdmin = require('firebase-admin');
+const firebaseAdmin = require('firebase-admin');
+const firebase = require('firebase');
 
 // const cors = require('cors');
 
@@ -45,14 +46,36 @@ export default class ExpressServer {
 
     app.use(boom());
 
-    // firebaseAdmin.initializeApp({
-    //   credential: firebaseAdmin.credential.cert({
-    //     projectId: process.env.PROJECT_ID.toString(),
-    //     clientEmail: process.env.CLIENT_EMAIL.toString(),
-    //     privateKey: process.env.PRIVATE_KEY.toString(),
-    //   }),
-    //   databaseURL: process.env.DATABAE_URL.toString(),
-    // });
+    firebaseAdmin.initializeApp({
+      credential: firebaseAdmin.credential.cert({
+        projectId: process.env.PROJECT_ID.toString(),
+        clientEmail: process.env.CLIENT_EMAIL.toString(),
+        privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
+      }),
+      databaseURL: process.env.DATABASE_URL.toString(),
+    });
+
+    const config = {
+      apiKey: process.env.FIREBASE_API_KEY,
+      authDomain: process.env.AUTH_DOMAIN,
+      databaseURL: process.env.DATABASE_URL,
+      projectId: process.env.PROJECT_ID,
+      storageBucket: process.env.STORAGE_BUCKET,
+      messagingSenderId: process.env.MESSAGING_SENDER_ID,
+    };
+
+    console.log(config);
+
+    // const config = {
+    //   apiKey: 'AIzaSyAn6kyJxzZrFflz78MEz3tYCgdlcMujQC0',
+    //   authDomain: 'ic-dating-dev.firebaseapp.com',
+    //   databaseURL: 'https://ic-dating-dev.firebaseio.com',
+    //   projectId: 'ic-dating-dev',
+    //   storageBucket: 'ic-dating-dev.appspot.com',
+    //   messagingSenderId: '945749542557',
+    // };
+    firebase.initializeApp(config);
+
 
     // app.options('*', cors())
     if (process.env.NODE_ENV !== 'test') populateDB.populate();
