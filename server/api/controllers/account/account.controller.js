@@ -274,7 +274,7 @@ export class Controller {
         return u.save();
       }).then(u => {
         res.status(200).json({
-          pictureUrl: ResponseService.getCompressedPictureUrl(u.picture_url),
+          pictureUrl: ResponseService.getProfilePictureUrl(u.picture_url),
         });
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');
@@ -312,7 +312,7 @@ export class Controller {
         return user.save();
       }).then(u => {
         res.status(200).json({
-          pictureUrl: ResponseService.getCompressedPictureUrl(u.picture_url),
+          pictureUrl: ResponseService.getProfilePictureUrl(u.picture_url),
         });
       }).catch(jwt.TokenExpiredError, () => {
         res.boom.unauthorized('TokenExpiredError: JWT token expired');

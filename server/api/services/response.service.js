@@ -24,8 +24,8 @@ const generateAccountResponse = (user, reqQuery) => {
       dateOfBirth: moment.utc(user.date_of_birth).format('YYYY-MM-DD'),
       gender: user.gender,
       phoneNum: user.phone_num,
-      pictureUrl: getSquarePictureUrl(user.picture_url),
-      pictureThumbnailUrl: getCompressedPictureUrl(user.picture_url),
+      pictureUrl: getProfilePictureUrl(user.picture_url),
+      pictureThumbnailUrl: getThumbnailPictureUrl(user.picture_url),
       originalPictureUrl: user.picture_url,
       description: user.description,
       signId: signResponse,
@@ -40,7 +40,7 @@ const generateAccountResponse = (user, reqQuery) => {
   return response;
 };
 
-function getSquarePictureUrl(pictureUrlArray) {
+function getProfilePictureUrl(pictureUrlArray) {
   const modifiedPictureUrlArray = [];
   if (pictureUrlArray.length > 0) {
     for (let i = 0; i < pictureUrlArray.length; i++) {
@@ -54,13 +54,13 @@ function getSquarePictureUrl(pictureUrlArray) {
   return modifiedPictureUrlArray;
 }
 
-function getCompressedPictureUrl(pictureUrlArray) {
+function getThumbnailPictureUrl(pictureUrlArray) {
   const modifiedPictureUrlArray = [];
   if (pictureUrlArray.length > 0) {
     for (let i = 0; i < pictureUrlArray.length; i++) {
       const pictureUrl = pictureUrlArray[i];
 
-      const pictureLargeUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/resized/large${
+      const pictureLargeUrl = `${pictureUrl.substring(0, pictureUrl.lastIndexOf('/'))}/resized/small${
         pictureUrl.substring(pictureUrl.lastIndexOf('/'))}`;
       modifiedPictureUrlArray.push(pictureLargeUrl);
     }
@@ -70,6 +70,6 @@ function getCompressedPictureUrl(pictureUrlArray) {
 
 module.exports = {
   generateAccountResponse,
-  getCompressedPictureUrl,
-  getSquarePictureUrl,
+  getThumbnailPictureUrl,
+  getProfilePictureUrl,
 };
