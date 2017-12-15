@@ -9,4 +9,5 @@ const validateAccountId = check('accountId', 'Enter a valid account ID').custom(
 export default express
   .Router()
   .get('/myAccountId/:myAccountId', controller.discover)
+  .get('/preview', controller.preview)
   .post('/hide/initiator/:initiatorAccountId/receiver/:receiverAccountId', [validateAccountId], controller.hideUser);

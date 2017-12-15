@@ -4,6 +4,7 @@ import User from '../../../model/user';
 import Hide from '../../../model/hide';
 import Sign from '../../../model/sign';
 import ResponseService from '../../services/response.service';
+import PopulateService from '../../services/populate.db.service';
 
 const moment = require('moment');
 const mongoose = require('mongoose');
@@ -15,19 +16,22 @@ function generateListQuery(reqQuery, myAccountId, hides) {
     query.display_name = { $exists: true };
     query.picture_url = { $exists: true };
     query.$where = 'this.picture_url.length>0';
-    const maxDistance = reqQuery.maxDistance || 2000;
-    query.geometry = {
-      $near: {
-        $geometry: {
-          type: 'Point',
-          coordinates: [reqQuery.longitude, reqQuery.latitude],
-        },
-        $maxDistance: maxDistance,
-        $minDistance: 0,
-      },
-    };
 
-    if (reqQuery.gender) query.gender = reqQuery.gender;
+    if (reqQuery.maxDistance) {
+      const maxDistance = reqQuery.maxDistance || 2000;
+      query.geometry = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [reqQuery.longitude, reqQuery.latitude],
+          },
+          $maxDistance: maxDistance,
+          $minDistance: 0,
+        },
+      };
+    }
+
+    if (reqQuery.gender && reqQuery.gender !== 'both') query.gender = reqQuery.gender;
     if (reqQuery.ethnicity) query.ethnicity = reqQuery.ethnicity;
     if (reqQuery.ageMax || reqQuery.ageMin) {
       const dateQuery = { };
@@ -162,6 +166,12 @@ export class Controller {
         console.error('error:', err.message);
         res.boom.badimplementation(err.message);
       });
+  }
+
+
+  preview(req, res) {
+    console.log('preview : ');
+    res.status(200).json(PopulateService.previewResponse());
   }
 }
 

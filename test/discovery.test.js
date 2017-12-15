@@ -136,6 +136,37 @@ describe('Discovery', () => {
         });
     });
 
+    it('discover with both gender filter', done => {
+      request(server)
+        .post('/api/v1/account/login')
+        .send({ phoneNum: '+16471112222', password: '55555555' })
+        .end((err0, res0) => {
+          expect(res0.statusCode).to.equal(201);
+          expect(res0.body).to.have.property('accountId');
+          request(server)
+            .get(`/api/v1/discovery/myAccountId/${res0.body.accountId}?gender=both&latitude=43.7659095&longitude=-79.4141207&maxDistance=100000`)
+            .end((err, res) => {
+              expect(res.statusCode).to.equal(200);
+              expect(res.body).to.be.a('object');
+              expect(res.body).to.have.property('list');
+              expect(res.body).to.have.property('totalPages');
+              expect(res.body).to.have.property('totalItems');
+              expect(res.body).to.have.property('limit');
+              expect(res.body).to.have.property('page');
+
+              expect(res.body.totalPages).to.equal(1);
+              expect(res.body.totalItems).to.equal(4);
+              expect(res.body.limit).to.equal(30);
+              expect(res.body.page).to.equal(1);
+
+              expect(res.body.list).to.be.a('array');
+              expect(res.body.list).to.have.lengthOf(4);
+
+              done();
+            });
+        });
+    });
+
     it('discover with min age filter', done => {
       request(server)
         .post('/api/v1/account/login')

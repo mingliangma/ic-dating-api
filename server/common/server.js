@@ -64,16 +64,6 @@ export default class ExpressServer {
       messagingSenderId: process.env.MESSAGING_SENDER_ID,
     };
 
-    console.log(config);
-
-    // const config = {
-    //   apiKey: 'AIzaSyAn6kyJxzZrFflz78MEz3tYCgdlcMujQC0',
-    //   authDomain: 'ic-dating-dev.firebaseapp.com',
-    //   databaseURL: 'https://ic-dating-dev.firebaseio.com',
-    //   projectId: 'ic-dating-dev',
-    //   storageBucket: 'ic-dating-dev.appspot.com',
-    //   messagingSenderId: '945749542557',
-    // };
     firebase.initializeApp(config);
 
 

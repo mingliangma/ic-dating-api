@@ -551,6 +551,33 @@ paths:
         404:
           description: User not found
 
+  /discovery/preview:
+    get:
+      tags:
+      - discovery
+      summary: Preview users using mock data
+      operationId: search
+      produces:
+        - application/json
+
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              totalPages:
+                type: number
+              limit:
+                type: number
+              page:
+                type: number
+              list:
+                type: array
+                items:
+                  $ref: '#/definitions/AccountVM'
+
+
   /discovery/hide/initiator/{initiatorAccountId}/receiver/{receiverAccountId}:
     post:
       tags:
