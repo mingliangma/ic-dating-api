@@ -45,6 +45,5 @@ export default express
   .get('/:accountId/image/gen-presigned-url', controller.generatePutPreSignedURL)
   .put('/:accountId/image', [validateUrl], controller.addPhoto)
   .delete('/:accountId/image', [validateUrl], controller.removePhoto)
-  .post('/hide/initiator/:initiatorAccountId/receiver/:receiverAccountId', controller.hideUser)
   .put('/:accountId/location', controller.updateMyLocation);
 

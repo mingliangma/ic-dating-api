@@ -109,14 +109,24 @@ export class Controller {
       .then(users => {
         if (users && users.length === 2) {
           const nowDate = moment().toDate();
+
+          let receiver;
+          let initiator;
+          (users[0]._id.toString() === initiatorAccountId) ? initiator = users[0] : receiver = users[0];
+          (users[1]._id.toString() === receiverAccountId) ? receiver = users[1] : initiator = users[1];
+
+          console.log('initiator: ', initiator);
+          console.log('receiver: ', receiver);
           return new Hide({
-            initiator: users[0],
-            receiver: users[1],
+            initiator,
+            receiver,
             created_at: nowDate,
           }).save((err, hide) => {
             console.log('err: ', err);
             console.log('hide: ', hide);
           });
+        }else{
+          console.log('users: ',users);
         }
       }).then(hide => {
         res.status(201).json({ success: true });
